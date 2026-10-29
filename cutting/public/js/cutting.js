@@ -22,6 +22,13 @@
   const nowUtc = () => Date.now() + (cache.clock_delta_ms || 0);
   document.documentElement.lang = root.dataset.lang;
   $("device-id").value = deviceId;
+  const deviceSettings = $("device-settings");
+
+  function closeDeviceSettings() {
+    if (deviceSettings.open) deviceSettings.close();
+    $("open-device-settings").setAttribute("aria-expanded", "false");
+    $("open-device-settings").focus();
+  }
 
   function notice(text, error = false) {
     $("notice").textContent = text;
@@ -120,6 +127,7 @@
         await syncQueue();
         const rows = await request("cutting.api.get_device_records", { id: deviceId });
         persist(core.mergeServer(readState(), rows));
+        closeDeviceSettings();
       }
       notice(response.notice || (cache.approved ? t("ui.approved") : t("ui.pending")));
     } catch (error) {
@@ -160,6 +168,8 @@
     const count = state.records.length + state.updates.length + state.deletes.length;
     $("pending-count").textContent = t("ui.pending_count", { count });
     $("entry-fields").disabled = deviceBusy || !cache.approved || !cache.catalog;
+    $("device-settings-status").textContent = cache.approved ? t("ui.approved") : t("ui.pending");
+    $("device-settings-status").className = `indicator-pill ${cache.approved ? "green" : "orange"}`;
     $("device-id").disabled = inFlight || deviceBusy;
     $("register-device").disabled = inFlight || deviceBusy;
     $("check-device").disabled = inFlight || deviceBusy;
@@ -243,6 +253,13 @@
     } catch (error) { notice(error.message, true); }
   });
   for (const id of ids) controls[id].addEventListener("change", renderSelectors);
+  $("open-device-settings").addEventListener("click", () => {
+    deviceSettings.showModal();
+    $("open-device-settings").setAttribute("aria-expanded", "true");
+    $("device-id").focus();
+  });
+  $("close-device-settings").addEventListener("click", closeDeviceSettings);
+  deviceSettings.addEventListener("close", () => $("open-device-settings").setAttribute("aria-expanded", "false"));
   $("register-device").addEventListener("click", () => deviceAction(true));
   $("check-device").addEventListener("click", () => deviceAction(false));
   $("sync").addEventListener("click", syncQueue);

@@ -25,7 +25,7 @@ App không cần Server Scripts. Schema là DocType chuẩn được quản lý 
 
 ## Tablet
 
-Mở `/cutting` (tiếng Việt) hoặc `/cutting?lang=en`. Nhập hoặc đăng ký UUID thiết bị, rồi duyệt thiết bị trong **Factory Device**, bật hoạt động và gán công ty. Tablet dùng ID của thiết bị theo cùng cơ chế QC/UQQC; ID không phải bí mật. Không đưa API key/secret Administrator vào tablet.
+Mở `/cutting` (tiếng Việt) hoặc `/cutting?lang=en`. Form **Nhập Cutting** nằm ở cột trái, bản ghi nằm bên phải. Dùng nút **Cài đặt thiết bị** trên đầu trang để đăng ký hoặc kiểm tra UUID, rồi duyệt thiết bị trong **Factory Device**, bật hoạt động và gán công ty. Tablet dùng ID của thiết bị theo cùng cơ chế QC/UQQC; ID không phải bí mật. Không đưa API key/secret Administrator vào tablet.
 
 Chỉ các biến thể đang hoạt động và có đủ sản phẩm, màu, size, thị trường mới xuất hiện. Bản ghi Cutting chỉ lưu sản phẩm, màu, thị trường, mã kế hoạch, số lượng và thời điểm phát sinh. Mã sự kiện được tạo riêng cho từng lần nhập; gửi lại cùng mã của cùng thiết bị không tạo bản ghi thứ hai.
 

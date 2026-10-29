@@ -1,4 +1,4 @@
-# Kiểm chứng bản 0.1.0
+# Kiểm chứng bản 0.1.1
 
 Ngày kiểm tra: 2026-10-29. Môi trường: Frappe 16.53.0, Python 3.14, Factory Management 0.1.29. Các kiểm tra có dữ liệu dùng site thử riêng, chỉ tạo dữ liệu giả.
 
@@ -12,3 +12,5 @@ Ngày kiểm tra: 2026-10-29. Môi trường: Frappe 16.53.0, Python 3.14, Facto
 - Package wheel, build assets, migrate lặp lại và smoke test sau cài đạt. Smoke tạo tablet/import mẫu, kiểm tra idempotency/lịch sử/báo cáo rồi rollback toàn bộ.
 
 Khi site có trang Builder hoặc Web Page cũ tại `/cutting`, cần tắt xuất bản trang cũ trước để URL đi vào app. Installer phát hiện xung đột; không ghi đè nội dung trang cũ. Không chuyển dữ liệu SQL hoặc hàng đợi của phần mềm cũ.
+
+- Form nhập ở cột trái, bảng bản ghi ở cột phải; đăng ký/kiểm tra thiết bị nằm trong hộp thoại mở từ nút cài đặt trên đầu trang.
