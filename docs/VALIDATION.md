@@ -20,3 +20,5 @@ Khi site có trang Builder hoặc Web Page cũ tại `/cutting`, cần tắt xu�
 - Form tablet giống luồng cũ: mã hàng, thị trường, màu, ID mã hàng và số lượng; không có trường mùa sản xuất.
 - Danh sách hiển thị tối đa 200 bản ghi gần nhất của thiết bị, không giới hạn trong ngày hiện tại. Bộ lọc gồm mã hàng, màu, thị trường, khoảng ngày và ID mã hàng; phân trang bắt đầu ở 8 dòng.
 - Thêm logo Kim Thanh Group và icon toàn màn hình, kết nối, cài đặt thiết bị. Card nhập và card bản ghi phân biệt bằng utility class mặc định của Desk; không thêm CSS riêng.
+- Đã xem trang đang chạy ở 267×844, 390×844, 1024×768 và 1440×900; không tràn ngang. Toàn màn hình bật/tắt, nút kết nối kiểm tra được API, hộp thoại thiết bị mở/đóng và trả focus đúng.
+- Đã thao tác bộ lọc ID, mã hàng và phân trang bằng dữ liệu giả chỉ trong localStorage của browser offline; không gửi bản ghi lên site. Không chạy lại bộ test tự động cho thay đổi giao diện này.

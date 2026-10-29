@@ -29,7 +29,7 @@ Mở `/cutting` (tiếng Việt) hoặc `/cutting?lang=en`. Form **Nhập Cuttin
 
 Dùng nút cài đặt thiết bị trên đầu trang để đăng ký hoặc kiểm tra UUID, rồi duyệt thiết bị trong **Factory Device**, bật hoạt động và gán công ty. Tablet dùng ID của thiết bị theo cùng cơ chế QC/UQQC; ID không phải bí mật. Không đưa API key/secret Administrator vào tablet.
 
-Chỉ các biến thể đang hoạt động và có đủ sản phẩm, màu, size, thị trường mới xuất hiện. Bản ghi Cutting chỉ lưu sản phẩm, màu, thị trường, mã kế hoạch, số lượng và thời điểm phát sinh. Mã sự kiện được tạo riêng cho từng lần nhập; gửi lại cùng mã của cùng thiết bị không tạo bản ghi thứ hai.
+Chỉ các biến thể đang hoạt động và có đủ sản phẩm, màu, size, thị trường mới xuất hiện. Bản ghi Cutting chỉ lưu mã hàng, màu, thị trường, ID mã hàng, số lượng và thời điểm phát sinh. Mã sự kiện được tạo riêng cho từng lần nhập; gửi lại cùng mã của cùng thiết bị không tạo bản ghi thứ hai.
 
 Hàng đợi được lưu trong `localStorage`, riêng cho mỗi ID thiết bị. Tạo/sửa/xóa khi mất mạng vẫn được giữ khi tab đang mở và tự gửi lại khi kết nối trở về. HTTP nội bộ không hỗ trợ service worker: đóng hoặc tải lại trang khi đang mất mạng sẽ không mở lại được app. Khi truy cập lại lúc có mạng, hàng đợi đã lưu tiếp tục được đồng bộ. Không xóa dữ liệu browser khi còn hàng đợi.
 

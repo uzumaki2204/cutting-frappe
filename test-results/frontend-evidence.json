@@ -1,8 +1,9 @@
 {
   "contract": "Default Frappe Desk controls and stylesheet only; no Cutting CSS, no extra subtitle; Vietnamese/English shared catalog.",
-  "targetViewports": ["390x844", "1024x768", "1440x900"],
-  "accessibility": {"status": "pass", "evidence": "All public input/select controls have explicit labels. Device setup opens in a labeled dialog, focuses the device ID, and restores focus to its trigger on close. Label contrast 7.81:1, primary button 17.93:1, green status 4.54:1. Desk report selects have aria-labels."},
-  "responsive": {"status": "pass", "evidence": "Rendered all three target sizes. Document scrollWidth equals viewport width; wide records remain inside table-responsive."},
+  "targetViewports": ["267x844", "390x844", "1024x768", "1440x900"],
+  "accessibility": {"status": "pass", "evidence": "All public input/select controls have explicit labels. Fullscreen, network, settings, sync, and clear-filter icon buttons have localized accessible names. Device setup opens in a labeled dialog, focuses the device ID, and restores focus to its trigger on close. Desk report selects have aria-labels."},
+  "responsive": {"status": "pass", "evidence": "Rendered all four target sizes. Document scrollWidth equals viewport width; entry and records cards stack on phone widths and sit side by side from 1024px."},
+  "visualReview": {"status": "pass", "evidence": "Live Frappe page uses only desk.bundle.css. Fullscreen toggled on and off, the network control reported connectivity, and device settings opened and returned focus. Client-only offline mock data showed that ID/product filters and pagination update the displayed rows; no records were sent to the site."},
   "contentStates": {
     "loading": {"status": "pass", "evidence": "Slow 3G snapshot displayed the localized loading status while retaining the approved device and cached rows."},
     "empty": {"status": "pass", "evidence": "Unregistered tablet shows no records and disabled entry controls; live Desk report shows the native empty message."},
@@ -12,8 +13,9 @@
     "permission": {"status": "pass", "evidence": "Unapproved entry is disabled in the public UI. Backend integration tests reject a Pending device and anonymous reports. Manager can open its own native import form."}
   },
   "renderedEvidence": [
-    {"viewport": "390x844", "artifact": "tablet-390-offline.png", "observation": "Single column native controls and retained offline queue; records table scrolls internally."},
-    {"viewport": "1024x768", "artifact": "tablet-1024-synced.png", "observation": "Cutting entry form stays in the left panel; saved records use the right panel and an internally scrolling table."},
-    {"viewport": "1440x900", "artifact": "desktop-1440-synced.png", "observation": "Narrow entry panel on the left; saved records and table on the right; device registration is in the header settings dialog."}
+    {"viewport": "267x844", "artifact": "layout-267-mock.png", "observation": "Narrow phone: branded toolbar and entry card fit without horizontal overflow; filter card follows below."},
+    {"viewport": "390x844", "artifact": "layout-390-mock.png", "observation": "Phone view stacks the entry and saved-record cards; standard Desk controls and filters remain reachable."},
+    {"viewport": "1024x768", "artifact": "layout-1024-mock.png", "observation": "Entry card remains on the left; saved records, filters, and table sit on the right."},
+    {"viewport": "1440x900", "artifact": "layout-1440-mock.png", "observation": "Distinct left entry and right records cards, logo, filters, and header icons; default Desk stylesheet only."}
   ]
 }
