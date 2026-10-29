@@ -83,8 +83,14 @@
           <h2 id="records-title" class="h4 mb-0">{{ texts['ui.saved_records'] }} <span id="records-count" class="badge badge-primary">0</span></h2>
           <div class="d-flex align-items-center mt-2 mt-sm-0">
             <span id="pending-count" class="text-muted mr-2 d-none d-sm-inline"></span>
-            <button id="sync" type="button" class="btn btn-default btn-sm mr-2">{{ texts['ui.sync'] }}</button>
-            <button id="clear-filters" type="button" class="btn btn-default btn-sm mr-2">{{ texts['ui.clear_filters'] }}</button>
+            <button id="sync" type="button" class="btn btn-default btn-sm mr-2" aria-label="{{ texts['ui.sync'] }}" title="{{ texts['ui.sync'] }}">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M5.6 9a7 7 0 0 1 11.6-2L20 12M4 12l2.8 5a7 7 0 0 0 11.6-2"/></svg>
+              <span class="d-none d-sm-inline ml-1">{{ texts['ui.sync'] }}</span>
+            </button>
+            <button id="clear-filters" type="button" class="btn btn-default btn-sm mr-2" aria-label="{{ texts['ui.clear_filters'] }}" title="{{ texts['ui.clear_filters'] }}">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h18l-7 8v5l-4 2v-7L3 5Z"/><path d="m17 15 5 5m0-5-5 5"/></svg>
+              <span class="d-none d-sm-inline ml-1">{{ texts['ui.clear_filters'] }}</span>
+            </button>
             <button id="new-entry" type="button" class="btn btn-primary btn-sm">{{ texts['ui.new_entry'] }}</button>
           </div>
         </div>
