@@ -19,7 +19,12 @@ def _fixtures():
     size_type = frappe.get_meta("Product Variant").get_field("size").options
     size = frappe.get_doc({"doctype": size_type, "size_label": code, "size_code": code, "is_active": 1}).insert(ignore_permissions=True, set_name=code)
     frappe.get_doc({"doctype": "Product Variant", "product": product.name, "color": color.name, "market": market.name, "size": size.name, "is_active": 1}).insert(ignore_permissions=True)
-    device = frappe.get_doc({"doctype": "Factory Device", "name": str(uuid.uuid4()), "device_name": code, "company": company.name, "status": "Approved", "is_active": 1}).insert(ignore_permissions=True)
+    device_id = str(uuid.uuid4())
+    device_values = {"doctype": "Factory Device", "name": device_id, "device_name": code, "company": company.name, "status": "Approved", "is_active": 1}
+    for field in ("device_id", "device_uid"):
+        if frappe.get_meta("Factory Device").has_field(field):
+            device_values[field] = device_id
+    device = frappe.get_doc(device_values).insert(ignore_permissions=True, set_name=device_id)
     return {"company": company.name, "product": product.name, "color": color.name, "market": market.name, "device": device.name}
 
 

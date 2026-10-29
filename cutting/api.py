@@ -10,6 +10,7 @@ import frappe
 from cutting.access import require_manager, require_viewer
 from cutting.cutting.doctype.cutting_record.cutting_record import event_uid, utc_db_now
 from cutting.i18n import catalog, message
+from cutting import devices
 
 
 BATCH_LIMIT = 500
@@ -31,6 +32,16 @@ def device_epoch():
     return data_epoch.current()
 
 
+@frappe.whitelist(allow_guest=True, methods=["POST"])
+def register_device(id: str | None = None, device_name: str | None = None):
+    return devices.register(id, device_name)
+
+
+@frappe.whitelist(allow_guest=True, methods=["POST"])
+def check_device(id: str | None = None):
+    return devices.check(id)
+
+
 def _fail(key, error=frappe.ValidationError, **values):
     frappe.throw(message(key, **values), error)
 
@@ -47,9 +58,7 @@ def _data(value, fallback=None):
 
 
 def _device(id):
-    if not id or not frappe.db.exists("Factory Device", str(id)):
-        _fail("error.device_missing", frappe.DoesNotExistError)
-    device = frappe.get_doc("Factory Device", str(id))
+    device = devices.find(id)
     if device.status != "Approved" or not device.is_active:
         _fail("error.device_pending", frappe.PermissionError)
     if not device.company:

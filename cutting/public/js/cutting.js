@@ -86,7 +86,7 @@
 
   async function sharedDevice(method, args) {
     const epoch = await request("cutting.api.device_epoch");
-    return request(`factory_management.api.${method}`, args, true, { "X-Factory-Data-Epoch": epoch.generation || "" });
+    return request(`cutting.api.${method}`, args, true, { "X-Factory-Data-Epoch": epoch.generation || "" });
   }
 
   function setDevice() {

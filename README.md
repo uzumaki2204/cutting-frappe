@@ -45,6 +45,8 @@ Hợp đồng API chuẩn nằm trong `docs/openapi.json`; collection Postman đ
 
 Catalog UTF-8 Việt/Anh dùng chung frontend/backend là `cutting/i18n.json`; nhãn DocType dùng `cutting/translations/*.csv`. Repo không chứa credential hoặc địa chỉ riêng của site.
 
+Adapter đăng ký/kiểm tra thiết bị gọi API dùng chung trên bản Factory Management mới. Với bản cũ có token riêng của QC, adapter chỉ đăng ký Factory Device ở trạng thái Pending và dùng cùng phê duyệt chung; không tạo QC client, token hoặc quyền QC. Liên kết size được đọc từ metadata Product Variant để hỗ trợ cả `Size` cũ và `ProductSize` mới.
+
 ## Kiểm tra và phát hành
 
 ```bash

@@ -18,7 +18,12 @@ class TestCutting(IntegrationTestCase):
         size_type = frappe.get_meta("Product Variant").get_field("size").options
         self.size = frappe.get_doc({"doctype": size_type, "size_label": "CUT-" + suffix, "size_code": "CUT-" + suffix, "is_active": 1}).insert(set_name="CUT-" + suffix)
         frappe.get_doc({"doctype": "Product Variant", "product": self.product.name, "color": self.color.name, "market": self.market.name, "size": self.size.name, "is_active": 1}).insert()
-        self.device = frappe.get_doc({"doctype": "Factory Device", "name": str(uuid.uuid4()), "device_name": "CUT-" + suffix, "company": self.company.name, "status": "Approved", "is_active": 1}).insert()
+        device_id = str(uuid.uuid4())
+        values = {"doctype": "Factory Device", "name": device_id, "device_name": "CUT-" + suffix, "company": self.company.name, "status": "Approved", "is_active": 1}
+        for field in ("device_id", "device_uid"):
+            if frappe.get_meta("Factory Device").has_field(field):
+                values[field] = device_id
+        self.device = frappe.get_doc(values).insert(set_name=device_id)
 
     def item(self, local_id="event-1", quantity=10):
         return {"local_event_id": local_id, "product": self.product.name, "color": self.color.name, "market": self.market.name, "product_code_identifier": "PLAN", "quantity": quantity, "occurred_at": "2026-10-29T01:00:00Z"}

@@ -1084,9 +1084,9 @@
         ]
       }
     },
-    "/api/method/factory_management.api.register_device": {
+    "/api/method/cutting.api.register_device": {
       "post": {
-        "operationId": "factory_management_api_register_device",
+        "operationId": "cutting_api_register_device",
         "summary": "Shared Factory Management device register_device",
         "tags": [
           "Shared"
@@ -1181,12 +1181,13 @@
               }
             }
           }
-        }
+        },
+        "description": "Uses the shared modern device API; adapts older QC-token registration to the common Factory Device approval state without granting QC access."
       }
     },
-    "/api/method/factory_management.api.check_device": {
+    "/api/method/cutting.api.check_device": {
       "post": {
-        "operationId": "factory_management_api_check_device",
+        "operationId": "cutting_api_check_device",
         "summary": "Shared Factory Management device check_device",
         "tags": [
           "Shared"
@@ -1281,7 +1282,8 @@
               }
             }
           }
-        }
+        },
+        "description": "Uses the shared modern device API; adapts older QC-token registration to the common Factory Device approval state without granting QC access."
       }
     }
   },

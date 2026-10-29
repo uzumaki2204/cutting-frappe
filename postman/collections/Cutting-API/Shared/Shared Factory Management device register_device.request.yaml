@@ -1,5 +1,5 @@
 $kind: http-request
-url: '{{baseUrl}}/api/method/factory_management.api.register_device'
+url: '{{baseUrl}}/api/method/cutting.api.register_device'
 method: POST
 headers:
   Accept: application/json

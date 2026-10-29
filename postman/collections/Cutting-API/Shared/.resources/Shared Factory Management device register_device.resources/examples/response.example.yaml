@@ -2,7 +2,7 @@ $kind: http-example
 name: 'Success'
 request:
   method: POST
-  url: '{{baseUrl}}/api/method/factory_management.api.register_device'
+  url: '{{baseUrl}}/api/method/cutting.api.register_device'
 response:
   statusCode: 200
   statusText: OK
