@@ -6,7 +6,7 @@ from datetime import date, datetime, time, timedelta, timezone
 import frappe
 
 from cutting.access import require_viewer
-from cutting.api import _data, _fail, _zone
+from cutting.api import _data, _fail
 from cutting.i18n import message
 
 
@@ -61,9 +61,8 @@ JOINS = """
 def _report_rows(from_date, to_date, maximum, filters):
     start, end = date_range(from_date, to_date, maximum)
     conditions, params = _where(filters)
-    zone = _zone()
-    params["start"] = datetime.combine(start, time.min, tzinfo=zone).astimezone(timezone.utc).replace(tzinfo=None)
-    params["end"] = datetime.combine(end + timedelta(days=1), time.min, tzinfo=zone).astimezone(timezone.utc).replace(tzinfo=None)
+    params["start"] = datetime.combine(start, time.min)
+    params["end"] = datetime.combine(end + timedelta(days=1), time.min)
     conditions += ["r.occurred_at >= %(start)s", "r.occurred_at < %(end)s"]
     color_meta = frappe.get_meta("Color")
     color_code = "col.color_code" if color_meta.has_field("color_code") else "col.name"
@@ -109,7 +108,7 @@ def report_summary(from_date: str | None = None, to_date: str | None = None, fil
         occurred = row.occurred_at
         if isinstance(occurred, str):
             occurred = datetime.fromisoformat(occurred)
-        local_day = occurred.replace(tzinfo=timezone.utc).astimezone(_zone()).date()
+        local_day = occurred.date()
         monday = local_day - timedelta(days=local_day.weekday())
         key = (row.device_name, row.product_code, row.market_code, row.color_code, row.product_code_identifier, monday.isoformat())
         grouped[key] += row.quantity

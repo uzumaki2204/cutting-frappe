@@ -3,12 +3,12 @@
 import hashlib
 import json
 from datetime import datetime, time, timedelta, timezone
-from zoneinfo import ZoneInfo
 
 import frappe
 
 from cutting.access import require_manager, require_viewer
-from cutting.cutting.doctype.cutting_record.cutting_record import event_uid, utc_db_now
+from cutting.cutting.doctype.cutting_record.cutting_record import event_uid
+from cutting.timeutils import site_now, site_zone as _zone, site_to_utc, utc_to_site
 from cutting.i18n import catalog, message
 from cutting import devices
 
@@ -66,14 +66,6 @@ def _device(id):
     return device
 
 
-def _zone():
-    name = frappe.db.get_single_value("System Settings", "time_zone") or "Asia/Ho_Chi_Minh"
-    try:
-        return ZoneInfo(name)
-    except KeyError:
-        return ZoneInfo("Asia/Ho_Chi_Minh")
-
-
 def _clock():
     now = datetime.now(timezone.utc)
     local = now.astimezone(_zone())
@@ -84,16 +76,13 @@ def _clock():
     }
 
 
-def _utc_db(value):
+def _site_db(value):
     if not value:
-        return utc_db_now()
+        return site_now()
     try:
-        parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+        return utc_to_site(value)
     except (TypeError, ValueError):
         _fail("error.input")
-    if parsed.tzinfo is None:
-        parsed = parsed.replace(tzinfo=timezone.utc)
-    return parsed.astimezone(timezone.utc).strftime("%Y-%m-%d %H:%M:%S.%f")
 
 
 def _event_id(item):
@@ -212,7 +201,7 @@ def _sync_records(id, records, updates, deletes):
                 "device": device.name,
                 "device_uid": device.name,
                 "local_event_id": local_id,
-                "occurred_at": _utc_db(item.get("occurred_at")),
+                "occurred_at": _site_db(item.get("occurred_at")),
                 "source": "Cutting",
             }).insert(ignore_permissions=True)
         accepted["records"].append(local_id)
@@ -231,7 +220,7 @@ def _sync_records(id, records, updates, deletes):
         if not record.is_deleted:
             record.flags.cutting_state_action = "Delete"
             record.is_deleted = 1
-            record.deleted_at = utc_db_now()
+            record.deleted_at = site_now()
             record.deleted_by = device.name
             record.save(ignore_permissions=True)
         accepted["deletes"].append(local_id)
@@ -250,8 +239,8 @@ def _sync_records(id, records, updates, deletes):
 def get_device_records(id: str | None = None):
     device = _device(id)
     now = datetime.now(_zone())
-    start = datetime.combine(now.date(), time.min, tzinfo=_zone()).astimezone(timezone.utc)
-    end = datetime.combine(now.date() + timedelta(days=1), time.min, tzinfo=_zone()).astimezone(timezone.utc)
+    start = datetime.combine(now.date(), time.min)
+    end = datetime.combine(now.date() + timedelta(days=1), time.min)
     fields = ["name", "product", "color", "market", "product_code_identifier", "quantity", "local_event_id", "occurred_at", "creation"]
     rows = frappe.get_all(
         "Cutting Record", fields=fields,
@@ -260,6 +249,7 @@ def get_device_records(id: str | None = None):
     )
     for row in rows:
         row.local_event_id = row.local_event_id or row.name
+        row.occurred_at = site_to_utc(row.occurred_at)
     return rows
 
 

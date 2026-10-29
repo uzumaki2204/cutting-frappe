@@ -4,6 +4,7 @@ frappe.pages["cutting-reports"].on_page_load = function (wrapper) {
     const controls = {};
     const add = (fieldname, label, fieldtype, options, value) => {
       controls[fieldname] = page.add_field({ fieldname, label: t(label), fieldtype, options, default: value });
+      controls[fieldname].$input?.attr("aria-label", t(label));
     };
     add("mode", "ui.mode", "Select", [t("ui.summary"), t("ui.detail"), t("ui.admin_summary")].join("\n"), t("ui.summary"));
     add("group_by", "ui.group_by", "Select", [t("ui.date"), t("ui.product"), t("ui.color"), t("ui.market")].join("\n"), t("ui.date"));

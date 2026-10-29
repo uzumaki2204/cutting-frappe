@@ -1,19 +1,20 @@
 """Cutting record validation and append-only audit snapshots."""
 
 import hashlib
-from datetime import datetime, timezone
+from datetime import datetime
 
 import frappe
 from frappe.model.document import Document
 
 from cutting.i18n import message
+from cutting.timeutils import site_now, site_zone
 
 
 SNAPSHOT_FIELDS = (
     "product", "color", "market", "product_code_identifier", "quantity",
     "occurred_at", "company", "device", "device_uid", "local_event_id", "source",
 )
-EDITABLE_FIELDS = ("product", "color", "market", "product_code_identifier", "quantity", "company")
+EDITABLE_FIELDS = ("product", "color", "market", "product_code_identifier", "quantity", "company", "note")
 IDENTITY_FIELDS = ("device", "device_uid", "local_event_id", "event_uid", "occurred_at", "source")
 
 
@@ -45,10 +46,6 @@ def _valid_variant(product, color, market):
         limit_page_length=100,
     )
     return any(row.size for row in rows)
-
-
-def utc_db_now():
-    return datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S.%f")
 
 
 def write_history(doc, action):
@@ -86,7 +83,7 @@ class CuttingRecord(Document):
             occurred = self.occurred_at if isinstance(self.occurred_at, datetime) else datetime.fromisoformat(str(self.occurred_at).replace("Z", "+00:00"))
         except (TypeError, ValueError):
             _fail("error.input")
-        self.occurred_at = occurred.astimezone(timezone.utc).replace(tzinfo=None) if occurred.tzinfo else occurred
+        self.occurred_at = occurred.astimezone(site_zone()).replace(tzinfo=None) if occurred.tzinfo else occurred
         for doctype, value in (("Product", self.product), ("Color", self.color), ("Market", self.market)):
             if not _exists(doctype, value):
                 _fail("error.master")
@@ -144,6 +141,6 @@ class CuttingRecord(Document):
             _fail("error.record_deleted" if deleted else "error.not_deleted")
         self.flags.cutting_state_action = "Delete" if deleted else "Restore"
         self.is_deleted = int(bool(deleted))
-        self.deleted_at = utc_db_now() if deleted else None
+        self.deleted_at = site_now() if deleted else None
         self.deleted_by = frappe.session.user if deleted else None
         self.save()

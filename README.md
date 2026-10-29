@@ -35,7 +35,7 @@ Trước khi chuyển từ phần mềm .NET, đồng bộ hết hàng đợi tr
 
 **Cutting Record** hỗ trợ Frappe **Data Import** với XLSX/CSV. Tải template từ DocType này; các Link dùng `name` của master trên site. `Product`, `Color`, `Market`, `Plan Code`, `Quantity` và `Occurred At` bắt buộc. Lịch sử có thể để trống `Factory Device`; khi thiếu thiết bị có thể nhập `Company` và `Device UID` nếu có. Đặt `Source = Import`. Import chỉ yêu cầu master tồn tại, cho phép master lịch sử đã ngừng hoạt động; API tablet luôn yêu cầu biến thể đang hoạt động.
 
-`Occurred At` được lưu UTC; file Excel/CSV phải dùng thời gian UTC dạng `YYYY-MM-DD HH:mm:ss`. Bản ghi import tạo một snapshot lịch sử `Import`. Không import trực tiếp `Cutting History`. Sửa, xóa mềm và khôi phục tạo lịch sử riêng; xóa vật lý bản ghi và chỉnh sửa lịch sử bị chặn.
+`Occurred At` và các trường Datetime dùng giờ site theo quy ước Frappe; file Excel/CSV dùng giờ site dạng `YYYY-MM-DD HH:mm:ss`. API tablet nhận và trả `occurred_at` dạng ISO UTC, tự chuyển đổi ở biên API. Bản ghi import tạo một snapshot lịch sử `Import`. Không import trực tiếp `Cutting History`. Sửa, xóa mềm và khôi phục tạo lịch sử riêng; xóa vật lý bản ghi và chỉnh sửa lịch sử bị chặn.
 
 Trong List **Cutting Record**, dùng nút **Thùng rác** để lọc bản ghi đã xóa. Mở form rồi dùng **Khôi phục**. Báo cáo chi tiết theo thời điểm phát sinh tối đa 7 ngày; báo cáo tổng hợp tối đa 31 ngày và nhóm theo thứ Hai đầu tuần, thiết bị, sản phẩm, thị trường, màu, mã kế hoạch. Ngày phát sinh được tính theo múi giờ site. Tổng hợp theo ngày tạo còn hỗ trợ nhóm theo sản phẩm, màu, thị trường.
 

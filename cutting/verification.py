@@ -68,7 +68,7 @@ def smoke():
         imported = frappe.get_doc({"doctype": "Cutting Record", "product": fixtures["product"],
                                    "color": fixtures["color"], "market": fixtures["market"],
                                    "product_code_identifier": "CUTTEST-IMPORT", "quantity": 1,
-                                   "occurred_at": api._utc_db(now["server_now_utc"]), "source": "Import"}).insert()
+                                   "occurred_at": api._site_db(now["server_now_utc"]), "source": "Import"}).insert()
         assert not imported.device
         result = reporting.report_summary(now["server_date_key"], now["server_date_key"], {"device": fixtures["device"]})
         assert result["metadata"]["sourceRowCount"] == 1

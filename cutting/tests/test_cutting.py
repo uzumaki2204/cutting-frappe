@@ -1,10 +1,12 @@
 import uuid
+from datetime import datetime, timezone
 
 import frappe
 from frappe.tests import IntegrationTestCase
 
 from cutting import api, reporting
 from cutting.cutting.doctype.cutting_record.cutting_record import event_uid
+from cutting.timeutils import site_zone, site_to_utc
 
 
 class TestCutting(IntegrationTestCase):
@@ -96,3 +98,16 @@ class TestCutting(IntegrationTestCase):
         with self.assertRaises(frappe.PermissionError):
             reporting.admin_summary()
         frappe.set_user("Administrator")
+
+    def test_utc_api_round_trip_and_local_date_boundary(self):
+        item = self.item()
+        item["occurred_at"] = "2026-10-28T22:00:00Z"
+        api.sync_records(self.device.name, [item])
+        occurred = datetime(2026, 10, 28, 22, tzinfo=timezone.utc)
+        record = self.record()
+        expected = occurred.astimezone(site_zone()).replace(tzinfo=None)
+        self.assertEqual(record.occurred_at, expected)
+        self.assertEqual(datetime.fromisoformat(site_to_utc(record.occurred_at)), occurred)
+        local_day = expected.date().isoformat()
+        rows = reporting.report_detail(local_day, local_day, {"device": self.device.name})
+        self.assertEqual(len(rows), 1)
