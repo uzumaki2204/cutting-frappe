@@ -136,7 +136,11 @@ def _option(row, code, title, **extra):
 @frappe.whitelist(allow_guest=True, methods=["GET"])
 def bootstrap(id: str | None = None):
     _device(id)
-    products = frappe.get_all("Product", fields=["name", "product_code", "product_name", "production_season"], filters={"is_active": 1}, limit_page_length=20000)
+    product_fields = ["name", "product_code", "product_name"]
+    season_field = "production_season" if frappe.get_meta("Product").has_field("production_season") else "season"
+    if frappe.get_meta("Product").has_field(season_field):
+        product_fields.append(season_field)
+    products = frappe.get_all("Product", fields=product_fields, filters={"is_active": 1}, limit_page_length=20000)
     colors = frappe.get_all("Color", fields=["name", "color_code", "color_name"], filters={"is_active": 1}, limit_page_length=20000)
     markets = frappe.get_all("Market", fields=["name", "code", "name_en"], filters={"is_active": 1}, limit_page_length=20000)
     seasons = frappe.get_all("Production Season", fields=["name", "season_code", "season_name"], filters={"is_active": 1}, limit_page_length=20000)
@@ -144,8 +148,9 @@ def bootstrap(id: str | None = None):
     product_ids = {row.name for row in products}
     color_ids = {row.name for row in colors}
     market_ids = {row.name for row in markets}
+    season_names = {row.season_code: row.name for row in seasons}
     catalog = {
-        "products": [_option(row, "product_code", "product_name", season_id=row.production_season) for row in products],
+        "products": [_option(row, "product_code", "product_name", season_id=season_names.get(row.get(season_field), row.get(season_field))) for row in products],
         "colors": [_option(row, "color_code", "color_name") for row in colors],
         "markets": [_option(row, "code", "name_en") for row in markets],
         "seasons": [_option(row, "season_code", "season_name") for row in seasons],

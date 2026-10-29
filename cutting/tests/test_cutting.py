@@ -15,7 +15,8 @@ class TestCutting(IntegrationTestCase):
         self.product = frappe.get_doc({"doctype": "Product", "product_code": "CUT-" + suffix, "product_name": suffix, "is_active": 1}).insert()
         self.color = frappe.get_doc({"doctype": "Color", "color_code": "CUT-" + suffix, "color_name": suffix, "color": "#" + suffix[:6], "is_active": 1}).insert(set_name="CUT-" + suffix)
         self.market = frappe.get_doc({"doctype": "Market", "code": "CUT-" + suffix, "name_en": suffix, "is_active": 1}).insert()
-        self.size = frappe.get_doc({"doctype": "ProductSize", "size_label": "CUT-" + suffix, "is_active": 1}).insert()
+        size_type = frappe.get_meta("Product Variant").get_field("size").options
+        self.size = frappe.get_doc({"doctype": size_type, "size_label": "CUT-" + suffix, "size_code": "CUT-" + suffix, "is_active": 1}).insert(set_name="CUT-" + suffix)
         frappe.get_doc({"doctype": "Product Variant", "product": self.product.name, "color": self.color.name, "market": self.market.name, "size": self.size.name, "is_active": 1}).insert()
         self.device = frappe.get_doc({"doctype": "Factory Device", "name": str(uuid.uuid4()), "device_name": "CUT-" + suffix, "company": self.company.name, "status": "Approved", "is_active": 1}).insert()
 
