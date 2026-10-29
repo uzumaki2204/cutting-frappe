@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cutting"
-version = "0.1.4"
+version = "0.1.5"
 description = "Cutting records for Frappe 16"
 readme = "README.md"
 requires-python = ">=3.14"

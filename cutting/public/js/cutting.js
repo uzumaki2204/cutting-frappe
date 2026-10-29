@@ -4,7 +4,8 @@
   if (!root) return;
   const texts = JSON.parse(document.getElementById("cutting-texts").textContent);
   const t = (key, values = {}) => Object.entries(values).reduce((s, [k, v]) => s.replaceAll(`{${k}}`, String(v)), texts[key] || texts["error.unexpected"]);
-  const $ = (id) => document.getElementById(id);
+  let deviceSettings = null;
+  const $ = (id) => document.getElementById(id) || deviceSettings?.$wrapper?.[0]?.querySelector(`#${id}`);
   const ids = ["product", "market", "color"];
   const controls = Object.fromEntries(ids.map((id) => [id, $(id)]));
   const filters = {
@@ -30,11 +31,12 @@
   const cacheKey = () => `cutting.catalog.${deviceId}`;
   const nowUtc = () => Date.now() + (cache.clock_delta_ms || 0);
   document.documentElement.lang = root.dataset.lang;
-  const deviceSettings = new frappe.ui.Dialog({
+  deviceSettings = new frappe.ui.Dialog({
     title: t("ui.settings"), size: "large",
     fields: [{ fieldname: "device_panel", fieldtype: "HTML" }],
   });
   deviceSettings.fields_dict.device_panel.$wrapper[0].append($("device-settings-template").content.cloneNode(true));
+  deviceSettings.$wrapper.find(".modal-header .close").attr("aria-label", t("ui.close"));
   deviceSettings.$wrapper.on("hidden.bs.modal", () => {
     stopQrScanner();
     $("open-device-settings").setAttribute("aria-expanded", "false");
@@ -111,7 +113,7 @@
 
   function clearDeviceCache() {
     if (deviceBusy || inFlight) return;
-    frappe.confirm(t("ui.confirm_clear_device_cache"), () => {
+    const confirmation = frappe.confirm(t("ui.confirm_clear_device_cache"), () => {
       try {
         window.CuttingDevice.clearStorage(localStorage);
         stopQrScanner();
@@ -127,7 +129,9 @@
         closeDeviceSettings();
         notice(t("ui.device_cache_cleared"));
       } catch (_) { notice(t("ui.storage_error"), true); }
-    });
+    }, null, t("ui.clear_device_cache"), t("ui.cancel_confirmation"));
+    confirmation.set_title(t("ui.confirm"));
+    confirmation.$wrapper.find(".modal-header .close").attr("aria-label", t("ui.close"));
   }
 
   function updateFullscreenButton() {

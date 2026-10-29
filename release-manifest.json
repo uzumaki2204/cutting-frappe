@@ -1,6 +1,6 @@
 {
   "app": "cutting",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "branch": "version-16",
   "frappe": ">=16.53.0,<17.0.0",
   "factory_management": ">=0.1.29,<0.2.0"

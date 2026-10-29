@@ -1,10 +1,11 @@
 """CLI-only test fixtures and a transactional installation smoke check."""
 
 import uuid
+from unittest.mock import patch
 
 import frappe
 
-from cutting import api, reporting
+from cutting import api, devices, reporting
 from cutting.cutting.doctype.cutting_record.cutting_record import event_uid
 from cutting.i18n import message
 
@@ -54,6 +55,25 @@ def smoke():
     try:
         frappe.set_user("Administrator")
         fixtures = _fixtures()
+        with patch.object(devices, "_require_current_epoch"):
+            unknown = str(uuid.uuid4())
+            count = frappe.db.count("Factory Device")
+            try:
+                devices.register(unknown)
+                assert False
+            except frappe.DoesNotExistError:
+                pass
+            assert frappe.db.count("Factory Device") == count
+            for field, value in (("status", "Pending"), ("is_active", 0), ("company", None)):
+                original = frappe.db.get_value("Factory Device", fixtures["device"], field)
+                frappe.db.set_value("Factory Device", fixtures["device"], field, value)
+                try:
+                    devices.register(fixtures["device"])
+                    assert False
+                except frappe.PermissionError:
+                    pass
+                frappe.db.set_value("Factory Device", fixtures["device"], field, original)
+            assert devices.register(fixtures["device"], "Untrusted name")["device"]["id"] == fixtures["device"]
         now = api._clock()
         item = {"local_event_id": uuid.uuid4().hex, "product": fixtures["product"],
                 "color": fixtures["color"], "market": fixtures["market"],
@@ -73,7 +93,7 @@ def smoke():
         result = reporting.report_summary(now["server_date_key"], now["server_date_key"], {"device": fixtures["device"]})
         assert result["metadata"]["sourceRowCount"] == 1
         assert len(api.history(name)) == 3
-        return {"bootstrap": True, "idempotent_sync": True, "delete_restore": True,
+        return {"device_activation": True, "bootstrap": True, "idempotent_sync": True, "delete_restore": True,
                 "import_without_device": True, "history": True, "reports": True, "rolled_back": True}
     finally:
         frappe.db.rollback(save_point=savepoint)

@@ -46,7 +46,7 @@
         <button id="clear-device-cache" type="button" class="btn btn-default">{{ texts['ui.clear_device_cache'] }}</button>
       </div>
       <div class="col-md-8">
-        <video id="qr-video" class="w-100 bg-dark border rounded" width="640" height="480" playsinline muted aria-label="{{ texts['ui.camera_view'] }}"></video>
+        <video id="qr-video" class="w-100 bg-dark border rounded" width="640" height="360" playsinline muted aria-label="{{ texts['ui.camera_view'] }}"></video>
         <p id="camera-status" class="text-muted text-center mt-2" role="status" aria-live="polite">{{ texts['ui.camera_idle'] }}</p>
       </div>
     </div>
@@ -167,5 +167,6 @@
 {% block script %}
 <script src="/assets/cutting/js/client-core.js?v={{ asset_version }}"></script>
 <script src="/assets/cutting/js/device-core.js?v={{ asset_version }}"></script>
+{{ include_script('controls.bundle.js') }}
 <script src="/assets/cutting/js/cutting.js?v={{ asset_version }}"></script>
 {% endblock %}
