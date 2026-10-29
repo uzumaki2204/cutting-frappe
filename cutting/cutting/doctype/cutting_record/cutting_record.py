@@ -82,6 +82,11 @@ class CuttingRecord(Document):
             _fail("error.import_source")
         if not self.occurred_at:
             _fail("error.input")
+        try:
+            occurred = self.occurred_at if isinstance(self.occurred_at, datetime) else datetime.fromisoformat(str(self.occurred_at).replace("Z", "+00:00"))
+        except (TypeError, ValueError):
+            _fail("error.input")
+        self.occurred_at = occurred.astimezone(timezone.utc).replace(tzinfo=None) if occurred.tzinfo else occurred
         for doctype, value in (("Product", self.product), ("Color", self.color), ("Market", self.market)):
             if not _exists(doctype, value):
                 _fail("error.master")
