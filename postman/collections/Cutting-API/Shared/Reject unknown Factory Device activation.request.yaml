@@ -1,0 +1,23 @@
+$kind: http-request
+url: '{{baseUrl}}/api/method/cutting.api.register_device'
+method: POST
+headers:
+  Accept: application/json
+  X-Factory-Data-Epoch: "{{generation}}"
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "id": "00000000-0000-0000-0000-000000000000",
+      "device_name": "Untrusted name"
+    }
+order: 1500
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("Unknown Factory Device returns 404", () => pm.response.to.have.status(404));
+      pm.test("Localized missing-device error", () => {
+        pm.expect(pm.response.json()._server_messages).to.be.a("string");
+      });

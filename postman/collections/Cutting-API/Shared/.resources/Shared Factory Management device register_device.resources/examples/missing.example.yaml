@@ -1,0 +1,17 @@
+$kind: http-example
+name: 'Unknown Device ID'
+request:
+  method: POST
+  url: '{{baseUrl}}/api/method/cutting.api.register_device'
+response:
+  statusCode: 404
+  statusText: Not Found
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "exc_type": "DoesNotExistError",
+        "_server_messages": "[\"{\\\"message\\\":\\\"Không tìm thấy Device ID trong Factory Device. Hãy liên hệ quản trị viên.\\\"}\"]"
+      }

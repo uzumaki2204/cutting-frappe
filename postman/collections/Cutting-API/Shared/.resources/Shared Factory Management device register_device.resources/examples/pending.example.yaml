@@ -1,0 +1,17 @@
+$kind: http-example
+name: 'Pending or inactive device'
+request:
+  method: POST
+  url: '{{baseUrl}}/api/method/cutting.api.register_device'
+response:
+  statusCode: 403
+  statusText: Forbidden
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "exc_type": "PermissionError",
+        "_server_messages": "[\"{\\\"message\\\":\\\"Thiết bị chưa được duyệt hoặc đã ngừng hoạt động.\\\"}\"]"
+      }

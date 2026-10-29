@@ -14,7 +14,7 @@
   const core = window.CuttingQueue;
   let deviceId = "";
   try { deviceId = localStorage.getItem("cutting.device") || ""; }
-  catch (_) { $("notice").textContent = t("ui.storage_error"); $("notice").hidden = false; return; }
+  catch (_) { frappe.show_alert({ message: t("ui.storage_error"), indicator: "red" }, 7); return; }
   let cache = {};
   let editing = null;
   let inFlight = false;
@@ -23,17 +23,111 @@
   let connected = navigator.onLine;
   let pageSize = 8;
   let currentPage = 1;
+  let qrStream = null;
+  let qrFrame = 0;
+  let qrSession = 0;
   const stateKey = () => `cutting.queue.${deviceId}`;
   const cacheKey = () => `cutting.catalog.${deviceId}`;
   const nowUtc = () => Date.now() + (cache.clock_delta_ms || 0);
   document.documentElement.lang = root.dataset.lang;
-  $("device-id").value = deviceId;
-  const deviceSettings = $("device-settings");
-
-  function closeDeviceSettings() {
-    if (deviceSettings.open) deviceSettings.close();
+  const deviceSettings = new frappe.ui.Dialog({
+    title: t("ui.settings"), size: "large",
+    fields: [{ fieldname: "device_panel", fieldtype: "HTML" }],
+  });
+  deviceSettings.fields_dict.device_panel.$wrapper[0].append($("device-settings-template").content.cloneNode(true));
+  deviceSettings.$wrapper.on("hidden.bs.modal", () => {
+    stopQrScanner();
     $("open-device-settings").setAttribute("aria-expanded", "false");
     $("open-device-settings").focus();
+  });
+
+  function closeDeviceSettings() {
+    deviceSettings.hide();
+  }
+
+  function stopQrScanner() {
+    qrSession += 1;
+    if (qrFrame) cancelAnimationFrame(qrFrame);
+    qrFrame = 0;
+    if (qrStream) qrStream.getTracks().forEach((track) => track.stop());
+    qrStream = null;
+    $("qr-video").pause();
+    $("qr-video").srcObject = null;
+    $("camera-status").textContent = t("ui.camera_idle");
+  }
+
+  async function scanQr() {
+    if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) {
+      $("camera-status").textContent = t("ui.camera_insecure");
+      notice(t("ui.camera_insecure"), true);
+      return;
+    }
+    if (!window.BarcodeDetector) {
+      $("camera-status").textContent = t("ui.camera_unsupported");
+      notice(t("ui.camera_unsupported"), true);
+      return;
+    }
+    const session = ++qrSession;
+    try {
+      const detector = new BarcodeDetector({ formats: ["qr_code"] });
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
+      if (session !== qrSession) { stream.getTracks().forEach((track) => track.stop()); return; }
+      qrStream = stream;
+      const video = $("qr-video");
+      video.srcObject = qrStream;
+      await video.play();
+      $("camera-status").textContent = t("ui.camera_scanning");
+      const detect = async () => {
+        if (!qrStream || session !== qrSession) return;
+        try {
+          const codes = await detector.detect(video);
+          if (codes.length) {
+            const id = window.CuttingDevice.parseId(codes[0].rawValue);
+            stopQrScanner();
+            if (!id) { notice(t("ui.device_id_invalid"), true); return; }
+            $("device-id").value = id;
+            $("device-id").focus();
+            notice(t("ui.qr_read"));
+            return;
+          }
+        } catch (_) { stopQrScanner(); notice(t("ui.camera_failed"), true); return; }
+        if (session === qrSession) qrFrame = requestAnimationFrame(detect);
+      };
+      qrFrame = requestAnimationFrame(detect);
+    } catch (_) {
+      stopQrScanner();
+      $("camera-status").textContent = t("ui.camera_failed");
+      notice(t("ui.camera_failed"), true);
+    }
+  }
+
+  function activateDevice() {
+    const raw = $("device-id").value.trim();
+    if (!raw) { notice(t("ui.device_required"), true); return; }
+    const candidate = window.CuttingDevice.parseId(raw);
+    if (!candidate) { notice(t("ui.device_id_invalid"), true); return; }
+    deviceAction(true, candidate);
+  }
+
+  function clearDeviceCache() {
+    if (deviceBusy || inFlight) return;
+    frappe.confirm(t("ui.confirm_clear_device_cache"), () => {
+      try {
+        window.CuttingDevice.clearStorage(localStorage);
+        stopQrScanner();
+        deviceId = "";
+        cache = {};
+        editing = null;
+        storageReady = true;
+        $("device-id").value = "";
+        $("entry-form").reset();
+        renderSelectors();
+        renderFilterOptions();
+        render();
+        closeDeviceSettings();
+        notice(t("ui.device_cache_cleared"));
+      } catch (_) { notice(t("ui.storage_error"), true); }
+    });
   }
 
   function updateFullscreenButton() {
@@ -68,9 +162,7 @@
   }
 
   function notice(text, error = false) {
-    $("notice").textContent = text;
-    $("notice").className = `alert ${error ? "alert-danger" : "alert-info"}`;
-    $("notice").hidden = !text;
+    if (text) frappe.show_alert({ message: text, indicator: error ? "red" : "green" }, error ? 7 : 4);
   }
 
   function readState() {
@@ -134,47 +226,37 @@
     return request(`cutting.api.${method}`, args, true, { "X-Factory-Data-Epoch": epoch.generation || "" });
   }
 
-  function setDevice() {
-    const value = $("device-id").value.trim().toLowerCase();
-    if (!value) throw new Error(t("ui.device_required"));
-    if (value !== deviceId) {
-      deviceId = value;
-      storageReady = true;
-      localStorage.setItem("cutting.device", deviceId);
-      editing = null;
-      loadCache();
-    }
-  }
-
-  async function deviceAction(register) {
+  async function deviceAction(activate, candidate = deviceId) {
     if (deviceBusy || inFlight) return;
     deviceBusy = true;
     try {
-      if (register && !$("device-id").value.trim()) $("device-id").value = uuid();
-      setDevice();
-      notice(t("ui.loading"));
-      const response = await sharedDevice(register ? "register_device" : "check_device", { id: deviceId, device_name: t("ui.title") });
+      if (!candidate) throw new Error(t("ui.device_required"));
+      const response = await sharedDevice(activate ? "register_device" : "check_device", { id: candidate });
       const device = response.device || response;
-      cache.approved = device.status === "Approved" && device.is_active && Boolean(device.company);
-      localStorage.setItem(cacheKey(), JSON.stringify(cache));
-      if (cache.approved) {
-        const data = await request("cutting.api.bootstrap", { id: deviceId });
-        cache = { ...data, approved: true, clock_delta_ms: Date.parse(data.server_now_utc) - Date.now() };
-        localStorage.setItem(cacheKey(), JSON.stringify(cache));
-        renderSelectors();
-        renderFilterOptions();
-        await syncQueue();
-        const rows = await request("cutting.api.get_device_records", { id: deviceId });
-        persist(core.mergeServer(readState(), rows));
-        closeDeviceSettings();
+      const data = await request("cutting.api.bootstrap", { id: candidate });
+      const nextCache = { ...data, approved: true, device_name: device.device_name,
+        clock_delta_ms: Date.parse(data.server_now_utc) - Date.now() };
+      localStorage.setItem(`cutting.catalog.${candidate}`, JSON.stringify(nextCache));
+      if (candidate !== deviceId) {
+        localStorage.setItem("cutting.device", candidate);
+        deviceId = candidate;
+        editing = null;
+        storageReady = true;
       }
-      notice(response.notice || (cache.approved ? t("ui.approved") : t("ui.pending")));
+      cache = nextCache;
+      renderSelectors();
+      renderFilterOptions();
+      render();
+      await syncQueue();
+      const rows = await request("cutting.api.get_device_records", { id: deviceId });
+      persist(core.mergeServer(readState(), rows));
+      if (activate) { closeDeviceSettings(); notice(response.notice || t("ok.device_activated")); }
     } catch (error) {
-      if (error.status && [400, 403, 404].includes(error.status)) {
+      if (candidate === deviceId && error.status && [400, 403, 404].includes(error.status)) {
         cache.approved = false;
         localStorage.setItem(cacheKey(), JSON.stringify(cache));
       }
-      notice(error.message, true);
+      if (activate || candidate === deviceId) notice(error.message, true);
     } finally { deviceBusy = false; render(); }
   }
 
@@ -240,9 +322,12 @@
     $("entry-fields").disabled = deviceBusy || !cache.approved || !cache.catalog;
     $("device-settings-status").textContent = cache.approved ? t("ui.approved") : t("ui.pending");
     $("device-settings-status").className = `indicator-pill ${cache.approved ? "green" : "orange"}`;
+    $("saved-device-id").value = deviceId;
+    $("device-name").value = cache.device_name || "";
     $("device-id").disabled = inFlight || deviceBusy;
-    $("register-device").disabled = inFlight || deviceBusy;
-    $("check-device").disabled = inFlight || deviceBusy;
+    $("activate-device").disabled = inFlight || deviceBusy;
+    $("scan-qr").disabled = inFlight || deviceBusy;
+    $("clear-device-cache").disabled = inFlight || deviceBusy;
     $("sync").disabled = inFlight || !cache.approved || !count;
     const connectionText = connected ? t("ui.online") : t("ui.offline");
     $("connection-status").textContent = connectionText;
@@ -352,14 +437,15 @@
   document.addEventListener("fullscreenchange", updateFullscreenButton);
   $("network-button").addEventListener("click", checkConnection);
   $("open-device-settings").addEventListener("click", () => {
-    deviceSettings.showModal();
+    $("device-id").value = deviceId;
+    deviceSettings.show();
     $("open-device-settings").setAttribute("aria-expanded", "true");
     $("device-id").focus();
   });
-  $("close-device-settings").addEventListener("click", closeDeviceSettings);
-  deviceSettings.addEventListener("close", () => $("open-device-settings").setAttribute("aria-expanded", "false"));
-  $("register-device").addEventListener("click", () => deviceAction(true));
-  $("check-device").addEventListener("click", () => deviceAction(false));
+  $("scan-qr").addEventListener("click", scanQr);
+  $("activate-device").addEventListener("click", activateDevice);
+  $("device-id").addEventListener("keydown", (event) => { if (event.key === "Enter") activateDevice(); });
+  $("clear-device-cache").addEventListener("click", clearDeviceCache);
   $("sync").addEventListener("click", syncQueue);
   $("cancel-edit").addEventListener("click", cancelEdit);
   window.addEventListener("online", () => { connected = true; render(); if (deviceId) deviceAction(false); });

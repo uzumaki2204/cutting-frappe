@@ -15,9 +15,11 @@ response:
         "message": {
           "device": {
             "id": "00000000-0000-0000-0000-000000000001",
+            "device_name": "Admin tablet",
             "status": "Approved",
             "is_active": true,
             "company": "COMPANY"
-          }
+          },
+          "notice": "Đã kích hoạt thiết bị Cutting."
         }
       }

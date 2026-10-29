@@ -19,4 +19,9 @@ scripts:
     language: text/javascript
     code: |-
       pm.test("Expected HTTP status", () => pm.response.to.have.status(200));
-      pm.test("Frappe message envelope", () => pm.expect(pm.response.json()).to.have.property("message"));
+      pm.test("Approved Factory Device returned", () => {
+        const device = pm.response.json().message.device;
+        pm.expect(device.status).to.eql("Approved");
+        pm.expect(device.is_active).to.eql(true);
+        pm.expect(device.company).to.be.ok;
+      });

@@ -1,9 +1,9 @@
-"""Reuse modern shared device APIs; adapt older QC-specific registration safely."""
+"""Cutting uses approved devices already maintained by Factory Management."""
 
-import inspect
-import uuid
+import importlib.util
 
 import frappe
+from frappe.utils import now_datetime
 
 from cutting.i18n import message
 
@@ -25,34 +25,31 @@ def info(device):
             "company": device.company, "factory": device.factory, "line": device.line}
 
 
-def _modern_shared_api():
-    from factory_management import api
+def _require_current_epoch():
+    if importlib.util.find_spec("factory_management.data_epoch") is not None:
+        from factory_management import data_epoch
 
-    return api if "id" in inspect.signature(api.register_device).parameters else None
+        data_epoch.require_current()
+
+
+def _approved(id):
+    device = find(id)
+    if device.status != "Approved" or not device.is_active:
+        frappe.throw(message("error.device_pending"), frappe.PermissionError)
+    if not device.company:
+        frappe.throw(message("error.device_company"), frappe.PermissionError)
+    return device
 
 
 def register(id=None, device_name=None):
-    shared = _modern_shared_api()
-    if shared:
-        return shared.register_device(id=id, device_name=device_name)
-    try:
-        name = str(uuid.UUID(str(id))) if id else str(uuid.uuid4())
-    except (TypeError, ValueError):
-        frappe.throw(message("error.input"), frappe.ValidationError)
-    if frappe.db.exists("Factory Device", name):
-        device = find(name)
-    else:
-        values = {"doctype": "Factory Device", "name": name, "device_name": str(device_name or "")[:140], "status": "Pending", "is_active": 1}
-        meta = frappe.get_meta("Factory Device")
-        for field in ("device_id", "device_uid"):
-            if meta.has_field(field):
-                values[field] = name
-        device = frappe.get_doc(values).insert(ignore_permissions=True, set_name=name)
-    return {"device": info(device), "notice": message("ok.device_approved" if device.status == "Approved" and device.is_active else "ok.device_pending")}
+    """Activate an existing Factory Device; never create or rename one."""
+    _require_current_epoch()
+    device = _approved(id)
+    if frappe.get_meta("Factory Device").has_field("last_seen_at"):
+        frappe.db.set_value("Factory Device", device.name, "last_seen_at", now_datetime(), update_modified=False)
+    return {"device": info(device), "notice": message("ok.device_activated")}
 
 
 def check(id):
-    shared = _modern_shared_api()
-    if shared:
-        return shared.check_device(id=id)
-    return info(find(id))
+    _require_current_epoch()
+    return info(_approved(id))

@@ -1,10 +1,11 @@
 import uuid
 from datetime import datetime, timezone
+from unittest.mock import patch
 
 import frappe
 from frappe.tests import IntegrationTestCase
 
-from cutting import api, reporting
+from cutting import api, devices, reporting
 from cutting.cutting.doctype.cutting_record.cutting_record import event_uid
 from cutting.timeutils import site_zone, site_to_utc
 
@@ -32,6 +33,28 @@ class TestCutting(IntegrationTestCase):
 
     def record(self, local_id="event-1"):
         return frappe.get_doc("Cutting Record", {"event_uid": event_uid(self.device.name, local_id)})
+
+    def test_activation_requires_existing_approved_factory_device(self):
+        unknown = str(uuid.uuid4())
+        before = frappe.db.count("Factory Device")
+        with patch.object(devices, "_require_current_epoch"):
+            with self.assertRaises(frappe.DoesNotExistError):
+                devices.register(unknown, "Untrusted tablet name")
+            self.assertEqual(frappe.db.count("Factory Device"), before)
+
+            for field, value in (("status", "Pending"), ("is_active", 0), ("company", None)):
+                original = self.device.get(field)
+                frappe.db.set_value("Factory Device", self.device.name, field, value)
+                with self.assertRaises(frappe.PermissionError):
+                    devices.register(self.device.name)
+                frappe.db.set_value("Factory Device", self.device.name, field, original)
+
+            response = devices.register(self.device.name, "Untrusted tablet name")
+        self.assertEqual(response["device"]["id"], self.device.name)
+        self.assertEqual(response["device"]["device_name"], self.device.device_name)
+        self.assertEqual(frappe.db.count("Factory Device"), before)
+        if frappe.get_meta("Factory Device").has_field("last_seen_at"):
+            self.assertTrue(frappe.db.get_value("Factory Device", self.device.name, "last_seen_at"))
 
     def test_replay_does_not_duplicate_or_overwrite_admin_edit(self):
         api.sync_records(self.device.name, [self.item()])

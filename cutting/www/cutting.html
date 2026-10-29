@@ -16,29 +16,41 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 8.8a15.5 15.5 0 0 1 20 0M5 12.2a10.8 10.8 0 0 1 14 0M8.5 15.7a5.5 5.5 0 0 1 7 0"/><circle cx="12" cy="19" r="1" fill="currentColor" stroke="none"/></svg>
         <span id="connection-status" class="sr-only" role="status" aria-live="polite"></span>
       </button>
-      <button id="open-device-settings" type="button" class="btn btn-default btn-sm" aria-label="{{ texts['ui.settings'] }}" title="{{ texts['ui.settings'] }}" aria-haspopup="dialog" aria-expanded="false" aria-controls="device-settings">
+      <button id="open-device-settings" type="button" class="btn btn-default btn-sm" aria-label="{{ texts['ui.settings'] }}" title="{{ texts['ui.settings'] }}" aria-haspopup="dialog" aria-expanded="false">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 2h4l.7 2.1 1.6.7 1.9-1 2.8 2.8-1 1.9.7 1.6L23 11v4l-2.1.7-.7 1.6 1 1.9-2.8 2.8-1.9-1-1.6.7L14 23h-4l-.7-2.1-1.6-.7-1.9 1L3 18.4l1-1.9-.7-1.6L1 14v-4l2.1-.7.7-1.6-1-1.9 2.8-2.8 1.9 1 1.6-.7L10 2Z"/><circle cx="12" cy="12.5" r="3"/></svg>
       </button>
     </div>
   </header>
 
-  <dialog id="device-settings" class="form-section p-4" aria-labelledby="device-settings-title" aria-describedby="device-settings-status">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-      <h2 id="device-settings-title" class="h4 mb-0">{{ texts['ui.device'] }}</h2>
-      <button id="close-device-settings" type="button" class="btn btn-default">{{ texts['ui.close'] }}</button>
+  <template id="device-settings-template">
+    <p class="text-muted mb-3">{{ texts['ui.device_instructions'] }}</p>
+    <div class="row">
+      <div class="col-md-4">
+        <div class="form-group">
+          <label class="control-label" for="saved-device-id">{{ texts['ui.saved_device_id'] }}</label>
+          <input id="saved-device-id" class="form-control" readonly>
+        </div>
+        <div class="form-group">
+          <label class="control-label" for="device-name">{{ texts['ui.device_name'] }}</label>
+          <input id="device-name" class="form-control" readonly>
+        </div>
+        <div class="form-group">
+          <label class="control-label" for="device-id">{{ texts['ui.enter_device_id'] }}</label>
+          <input id="device-id" class="form-control" autocomplete="off" spellcheck="false">
+        </div>
+        <p id="device-settings-status" class="indicator-pill orange mb-3" role="status" aria-live="polite"></p>
+        <div class="d-flex mb-2">
+          <button id="scan-qr" type="button" class="btn btn-default mr-2">{{ texts['ui.scan_qr'] }}</button>
+          <button id="activate-device" type="button" class="btn btn-primary">{{ texts['ui.activate_device'] }}</button>
+        </div>
+        <button id="clear-device-cache" type="button" class="btn btn-default">{{ texts['ui.clear_device_cache'] }}</button>
+      </div>
+      <div class="col-md-8">
+        <video id="qr-video" class="w-100 bg-dark border rounded" width="640" height="480" playsinline muted aria-label="{{ texts['ui.camera_view'] }}"></video>
+        <p id="camera-status" class="text-muted text-center mt-2" role="status" aria-live="polite">{{ texts['ui.camera_idle'] }}</p>
+      </div>
     </div>
-    <p id="device-settings-status" class="mb-3" role="status" aria-live="polite"></p>
-    <div class="form-group">
-      <label class="control-label" for="device-id">{{ texts['ui.device_id'] }}</label>
-      <input id="device-id" class="form-control" autocomplete="off" maxlength="36">
-    </div>
-    <div class="d-flex align-items-center">
-      <button id="register-device" type="button" class="btn btn-default mr-2">{{ texts['ui.register'] }}</button>
-      <button id="check-device" type="button" class="btn btn-default">{{ texts['ui.check'] }}</button>
-    </div>
-  </dialog>
-
-  <div id="notice" class="alert alert-info" role="status" aria-live="polite" hidden></div>
+  </template>
 
   <div class="row">
     <aside class="col-lg-3 col-xl-2 mb-4" aria-labelledby="entry-title">
@@ -154,5 +166,6 @@
 {% endblock %}
 {% block script %}
 <script src="/assets/cutting/js/client-core.js?v={{ asset_version }}"></script>
+<script src="/assets/cutting/js/device-core.js?v={{ asset_version }}"></script>
 <script src="/assets/cutting/js/cutting.js?v={{ asset_version }}"></script>
 {% endblock %}

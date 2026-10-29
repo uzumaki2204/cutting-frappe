@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Cutting API",
-    "version": "0.1.3",
+    "version": "0.1.4",
     "description": "Standalone Cutting for Frappe 16. Tablet calls use approved Factory Device IDs. Desk calls use Frappe User roles. No .NET API compatibility routes or machine ingest."
   },
   "servers": [
@@ -1087,7 +1087,7 @@
     "/api/method/cutting.api.register_device": {
       "post": {
         "operationId": "cutting_api_register_device",
-        "summary": "Shared Factory Management device register_device",
+        "summary": "Activate an existing approved Factory Device for Cutting",
         "tags": [
           "Shared"
         ],
@@ -1182,13 +1182,13 @@
             }
           }
         },
-        "description": "Uses the shared modern device API; adapts older QC-token registration to the common Factory Device approval state without granting QC access."
+        "description": "Requires an existing Factory Device that is Approved, active and assigned to a company. Unknown ID returns 404; pending, inactive or missing-company device returns 403. Never creates a device or changes its Admin-owned name. device_name remains accepted for payload compatibility but is ignored."
       }
     },
     "/api/method/cutting.api.check_device": {
       "post": {
         "operationId": "cutting_api_check_device",
-        "summary": "Shared Factory Management device check_device",
+        "summary": "Check an existing approved Factory Device for Cutting",
         "tags": [
           "Shared"
         ],
@@ -1283,7 +1283,7 @@
             }
           }
         },
-        "description": "Uses the shared modern device API; adapts older QC-token registration to the common Factory Device approval state without granting QC access."
+        "description": "Requires an existing Factory Device that is Approved, active and assigned to a company. Unknown ID returns 404; pending, inactive or missing-company device returns 403."
       }
     }
   },

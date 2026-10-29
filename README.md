@@ -27,11 +27,11 @@ App không cần Server Scripts. Schema là DocType chuẩn được quản lý 
 
 Mở `/cutting` (tiếng Việt) hoặc `/cutting?lang=en`. Form **Nhập Cutting** nằm ở card trái; chỉ gồm mã hàng, thị trường, màu, ID mã hàng và số lượng, không yêu cầu nhập mùa sản xuất. Card **Bản ghi đã lưu** ở bên phải có bộ lọc mã hàng, màu, thị trường, ngày và ID mã hàng, cùng phân trang 8 dòng mặc định. Danh sách đọc tối đa 200 bản ghi gần nhất của thiết bị hiện tại. Header có logo, nút toàn màn hình, trạng thái/kiểm tra kết nối và cài đặt thiết bị. Mọi thành phần dùng class/style mặc định của Frappe Desk; app không có CSS tùy biến.
 
-Dùng nút cài đặt thiết bị trên đầu trang để đăng ký hoặc kiểm tra UUID, rồi duyệt thiết bị trong **Factory Device**, bật hoạt động và gán công ty. Tablet dùng ID của thiết bị theo cùng cơ chế QC/UQQC; ID không phải bí mật. Không đưa API key/secret Administrator vào tablet.
+Dùng nút cài đặt thiết bị trên đầu trang để nhập hoặc quét Device ID do Admin cấp, rồi bấm **Kích hoạt**. Thiết bị phải tồn tại trong **Factory Device**, đã duyệt, đang hoạt động và được gán công ty. ID không tồn tại bị từ chối và không tạo bản ghi mới. Tên máy được đọc từ **Factory Device**, không lấy từ QR hoặc tablet. Site HTTP hiện tại chỉ hỗ trợ nhập ID thủ công vì camera trình duyệt cần ngữ cảnh an toàn. Không đưa API key/secret Administrator vào tablet.
 
 Chỉ các biến thể đang hoạt động và có đủ sản phẩm, màu, size, thị trường mới xuất hiện. Bản ghi Cutting chỉ lưu mã hàng, màu, thị trường, ID mã hàng, số lượng và thời điểm phát sinh. Mã sự kiện được tạo riêng cho từng lần nhập; gửi lại cùng mã của cùng thiết bị không tạo bản ghi thứ hai.
 
-Hàng đợi được lưu trong `localStorage`, riêng cho mỗi ID thiết bị. Tạo/sửa/xóa khi mất mạng vẫn được giữ khi tab đang mở và tự gửi lại khi kết nối trở về. HTTP nội bộ không hỗ trợ service worker: đóng hoặc tải lại trang khi đang mất mạng sẽ không mở lại được app. Khi truy cập lại lúc có mạng, hàng đợi đã lưu tiếp tục được đồng bộ. Không xóa dữ liệu browser khi còn hàng đợi.
+Hàng đợi được lưu trong `localStorage`, riêng cho mỗi ID thiết bị. Tạo/sửa/xóa khi mất mạng vẫn được giữ khi tab đang mở và tự gửi lại khi kết nối trở về. HTTP nội bộ không hỗ trợ service worker: đóng hoặc tải lại trang khi đang mất mạng sẽ không mở lại được app. Khi truy cập lại lúc có mạng, hàng đợi đã lưu tiếp tục được đồng bộ. Nút **Xóa cache** hỏi xác nhận rồi xóa toàn bộ dữ liệu Cutting trên trình duyệt, bao gồm hàng đợi chưa đồng bộ; dữ liệu ứng dụng khác được giữ nguyên.
 
 Trước khi chuyển từ phần mềm .NET, đồng bộ hết hàng đợi trên URL cũ. App không sao chép SQL Server hoặc localStorage của origin cũ. CuttingAgent, ingest và báo cáo máy cắt không thuộc bản này.
 
@@ -49,14 +49,14 @@ Hợp đồng API chuẩn nằm trong `docs/openapi.json`; collection Postman đ
 
 Catalog UTF-8 Việt/Anh dùng chung frontend/backend là `cutting/i18n.json`; nhãn DocType dùng `cutting/translations/*.csv`. Repo không chứa credential hoặc địa chỉ riêng của site.
 
-Adapter đăng ký/kiểm tra thiết bị gọi API dùng chung trên bản Factory Management mới. Với bản cũ có token riêng của QC, adapter chỉ đăng ký Factory Device ở trạng thái Pending và dùng cùng phê duyệt chung; không tạo QC client, token hoặc quyền QC. Liên kết size được đọc từ metadata Product Variant để hỗ trợ cả `Size` cũ và `ProductSize` mới.
+API kích hoạt/kiểm tra Cutting dùng `Factory Device` có sẵn và giữ nguyên URL/payload cũ. API không gọi nhánh đăng ký có thể tạo thiết bị và không đổi tên do Admin cấp. Liên kết size được đọc từ metadata Product Variant để hỗ trợ cả `Size` cũ và `ProductSize` mới.
 
 Nếu site dùng DocType `Color` chuẩn chưa có `color_code`, `color_name` hoặc `is_active`, Cutting dùng tên bản ghi làm mã/nhãn và coi màu đó là đang hoạt động. Khi các trường này có sẵn, Cutting dùng đúng mã, tên và cờ hoạt động của master.
 
 ## Kiểm tra và phát hành
 
 ```bash
-node --test tests/client-core.test.js
+node --test tests/*.test.js
 postman collection lint postman/collections/Cutting-API
 bench --site <test-site> run-tests --app cutting
 ```
