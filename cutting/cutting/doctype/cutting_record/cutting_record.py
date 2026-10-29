@@ -32,7 +32,9 @@ def _exists(doctype, name):
 
 
 def _active(doctype, name):
-    return _exists(doctype, name) and bool(frappe.db.get_value(doctype, name, "is_active"))
+    if not _exists(doctype, name):
+        return False
+    return not frappe.get_meta(doctype).has_field("is_active") or bool(frappe.db.get_value(doctype, name, "is_active"))
 
 
 def _valid_variant(product, color, market):

@@ -47,6 +47,8 @@ Catalog UTF-8 Việt/Anh dùng chung frontend/backend là `cutting/i18n.json`; n
 
 Adapter đăng ký/kiểm tra thiết bị gọi API dùng chung trên bản Factory Management mới. Với bản cũ có token riêng của QC, adapter chỉ đăng ký Factory Device ở trạng thái Pending và dùng cùng phê duyệt chung; không tạo QC client, token hoặc quyền QC. Liên kết size được đọc từ metadata Product Variant để hỗ trợ cả `Size` cũ và `ProductSize` mới.
 
+Nếu site dùng DocType `Color` chuẩn chưa có `color_code`, `color_name` hoặc `is_active`, Cutting dùng tên bản ghi làm mã/nhãn và coi màu đó là đang hoạt động. Khi các trường này có sẵn, Cutting dùng đúng mã, tên và cờ hoạt động của master.
+
 ## Kiểm tra và phát hành
 
 ```bash

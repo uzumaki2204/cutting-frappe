@@ -65,14 +65,17 @@ def _report_rows(from_date, to_date, maximum, filters):
     params["start"] = datetime.combine(start, time.min, tzinfo=zone).astimezone(timezone.utc).replace(tzinfo=None)
     params["end"] = datetime.combine(end + timedelta(days=1), time.min, tzinfo=zone).astimezone(timezone.utc).replace(tzinfo=None)
     conditions += ["r.occurred_at >= %(start)s", "r.occurred_at < %(end)s"]
+    color_meta = frappe.get_meta("Color")
+    color_code = "col.color_code" if color_meta.has_field("color_code") else "col.name"
+    color_name = "col.color_name" if color_meta.has_field("color_name") else "col.name"
     rows = frappe.db.sql(
-        """SELECT r.name, r.product, r.color, r.market, r.device, r.device_uid,
+        f"""SELECT r.name, r.product, r.color, r.market, r.device, r.device_uid,
             r.product_code_identifier, r.quantity, r.occurred_at, r.creation,
             r.local_event_id, r.owner, r.source,
             COALESCE(p.product_code, '') AS product_code,
             COALESCE(p.product_name, '') AS product_name,
-            COALESCE(col.color_code, '') AS color_code,
-            COALESCE(col.color_name, '') AS color_name,
+            COALESCE({color_code}, '') AS color_code,
+            COALESCE({color_name}, '') AS color_name,
             COALESCE(m.code, '') AS market_code,
             COALESCE(m.name_en, '') AS market_name,
             COALESCE(d.device_name, '') AS device_name,
@@ -159,7 +162,7 @@ def admin_summary(created_from: str | None = None, created_to: str | None = None
     dimensions = {
         "byCreatedDate": ("DATE(r.creation)", "DATE(r.creation)"),
         "byProduct": ("r.product", "p.product_code"),
-        "byColor": ("r.color", "col.color_code"),
+        "byColor": ("r.color", "col.color_code" if frappe.get_meta("Color").has_field("color_code") else "col.name"),
         "byMarket": ("r.market", "m.code"),
     }
     for key, (column, label) in dimensions.items():

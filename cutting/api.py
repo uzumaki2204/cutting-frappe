@@ -150,7 +150,10 @@ def bootstrap(id: str | None = None):
     if frappe.get_meta("Product").has_field(season_field):
         product_fields.append(season_field)
     products = frappe.get_all("Product", fields=product_fields, filters={"is_active": 1}, limit_page_length=20000)
-    colors = frappe.get_all("Color", fields=["name", "color_code", "color_name"], filters={"is_active": 1}, limit_page_length=20000)
+    color_meta = frappe.get_meta("Color")
+    color_code = "color_code" if color_meta.has_field("color_code") else "name"
+    color_title = "color_name" if color_meta.has_field("color_name") else "name"
+    colors = frappe.get_all("Color", fields=list(dict.fromkeys(["name", color_code, color_title])), filters={"is_active": 1} if color_meta.has_field("is_active") else {}, limit_page_length=20000)
     markets = frappe.get_all("Market", fields=["name", "code", "name_en"], filters={"is_active": 1}, limit_page_length=20000)
     seasons = frappe.get_all("Production Season", fields=["name", "season_code", "season_name"], filters={"is_active": 1}, limit_page_length=20000)
     variants = frappe.get_all("Product Variant", fields=["name", "product", "color", "market", "size"], filters={"is_active": 1}, limit_page_length=20000)
@@ -160,7 +163,7 @@ def bootstrap(id: str | None = None):
     season_names = {row.season_code: row.name for row in seasons}
     catalog = {
         "products": [_option(row, "product_code", "product_name", season_id=season_names.get(row.get(season_field), row.get(season_field))) for row in products],
-        "colors": [_option(row, "color_code", "color_name") for row in colors],
+        "colors": [_option(row, color_code, color_title) for row in colors],
         "markets": [_option(row, "code", "name_en") for row in markets],
         "seasons": [_option(row, "season_code", "season_name") for row in seasons],
         "product_variants": [
