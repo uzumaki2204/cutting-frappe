@@ -1,0 +1,1476 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Cutting API",
+    "version": "0.1.0",
+    "description": "Standalone Cutting for Frappe 16. Tablet calls use approved Factory Device IDs. Desk calls use Frappe User roles. No .NET API compatibility routes or machine ingest."
+  },
+  "servers": [
+    {
+      "url": "http://127.0.0.1:8000"
+    }
+  ],
+  "paths": {
+    "/api/method/cutting.api.translations": {
+      "get": {
+        "operationId": "cutting_api_translations",
+        "summary": "Read the shared UI/API translation catalog",
+        "tags": [
+          "Tablet"
+        ],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Successful Frappe method response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "message"
+                  ],
+                  "properties": {
+                    "message": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Device approval or User role denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FrappeError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Device or record not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FrappeError"
+                }
+              }
+            }
+          },
+          "417": {
+            "description": "Localized validation error; no writes from the failed batch are committed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FrappeError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Concurrent write conflict. Retain the queue and retry the same event IDs.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FrappeError"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "lang",
+            "in": "query",
+            "required": false,
+            "description": "",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "vi",
+                "en"
+              ],
+              "default": "vi"
+            }
+          }
+        ]
+      }
+    },
+    "/api/method/cutting.api.device_epoch": {
+      "get": {
+        "operationId": "cutting_api_device_epoch",
+        "summary": "Read the shared device-registration generation",
+        "tags": [
+          "Tablet"
+        ],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Successful Frappe method response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "message"
+                  ],
+                  "properties": {
+                    "message": {
+                      "type": "object",
+                      "properties": {
+                        "generation": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "message": {
+                    "generation": ""
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Device approval or User role denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FrappeError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Device or record not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FrappeError"
+                }
+              }
+            }
+          },
+          "417": {
+            "description": "Localized validation error; no writes from the failed batch are committed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FrappeError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Concurrent write conflict. Retain the queue and retry the same event IDs.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FrappeError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/method/cutting.api.bootstrap": {
+      "get": {
+        "operationId": "cutting_api_bootstrap",
+        "summary": "Read active Cutting master combinations",
+        "tags": [
+          "Tablet"
+        ],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Successful Frappe method response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "message"
+                  ],
+                  "properties": {
+                    "message": {
+                      "type": "object",
+                      "properties": {
+                        "catalog": {
+                          "$ref": "#/components/schemas/Catalog"
+                        },
+                        "catalog_version": {
+                          "type": "string"
+                        },
+                        "server_now_utc": {
+                          "type": "string"
+                        },
+                        "server_utc_offset_minutes": {
+                          "type": "integer"
+                        },
+                        "server_date_key": {
+                          "type": "string",
+                          "format": "date"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Device approval or User role denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FrappeError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Device or record not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FrappeError"
+                }
+              }
+            }
+          },
+          "417": {
+            "description": "Localized validation error; no writes from the failed batch are committed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FrappeError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Concurrent write conflict. Retain the queue and retry the same event IDs.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FrappeError"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "description": "Approved active Factory Device UUID with a company.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/api/method/cutting.api.get_device_records": {
+      "get": {
+        "operationId": "cutting_api_get_device_records",
+        "summary": "Read the latest 200 active records for the device today",
+        "tags": [
+          "Tablet"
+        ],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Successful Frappe method response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "message"
+                  ],
+                  "properties": {
+                    "message": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Device approval or User role denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FrappeError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Device or record not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FrappeError"
+                }
+              }
+            }
+          },
+          "417": {
+            "description": "Localized validation error; no writes from the failed batch are committed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FrappeError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Concurrent write conflict. Retain the queue and retry the same event IDs.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FrappeError"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "description": "Approved active Factory Device UUID with a company.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/api/method/cutting.api.sync_records": {
+      "post": {
+        "operationId": "cutting_api_sync_records",
+        "summary": "Atomically sync creates, updates and soft deletes",
+        "tags": [
+          "Tablet"
+        ],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Successful Frappe method response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "message"
+                  ],
+                  "properties": {
+                    "message": {
+                      "$ref": "#/components/schemas/SyncResult"
+                    }
+                  }
+                },
+                "example": {
+                  "message": {
+                    "accepted_count": 1,
+                    "accepted_local_event_ids": [
+                      "event-1"
+                    ],
+                    "accepted_update_count": 0,
+                    "accepted_update_local_event_ids": [],
+                    "accepted_delete_count": 0,
+                    "accepted_delete_local_event_ids": []
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Device approval or User role denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FrappeError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Device or record not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FrappeError"
+                }
+              }
+            }
+          },
+          "417": {
+            "description": "Localized validation error; no writes from the failed batch are committed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FrappeError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Concurrent write conflict. Retain the queue and retry the same event IDs.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FrappeError"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "id"
+                ],
+                "description": "At most 500 operations. Creates are idempotent by device/local_event_id, including after later edits. Updates and deletes are limited to the owning device. A validation failure rolls back the whole batch.",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "records": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/SyncItem"
+                    }
+                  },
+                  "updates": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/SyncItem"
+                    }
+                  },
+                  "deletes": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/DeleteItem"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/method/cutting.api.soft_delete": {
+      "post": {
+        "operationId": "cutting_api_soft_delete",
+        "summary": "Move a Cutting record to Trash",
+        "tags": [
+          "Desk"
+        ],
+        "security": [
+          {
+            "FrappeToken": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Frappe method response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "message"
+                  ],
+                  "properties": {
+                    "message": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Device approval or User role denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FrappeError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Device or record not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FrappeError"
+                }
+              }
+            }
+          },
+          "417": {
+            "description": "Localized validation error; no writes from the failed batch are committed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FrappeError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Concurrent write conflict. Retain the queue and retry the same event IDs.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FrappeError"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/method/cutting.api.restore": {
+      "post": {
+        "operationId": "cutting_api_restore",
+        "summary": "Restore a Cutting record",
+        "tags": [
+          "Desk"
+        ],
+        "security": [
+          {
+            "FrappeToken": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Frappe method response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "message"
+                  ],
+                  "properties": {
+                    "message": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Device approval or User role denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FrappeError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Device or record not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FrappeError"
+                }
+              }
+            }
+          },
+          "417": {
+            "description": "Localized validation error; no writes from the failed batch are committed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FrappeError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Concurrent write conflict. Retain the queue and retry the same event IDs.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FrappeError"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/method/cutting.api.history": {
+      "get": {
+        "operationId": "cutting_api_history",
+        "summary": "Read append-only record history",
+        "tags": [
+          "Desk"
+        ],
+        "security": [
+          {
+            "FrappeToken": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Frappe method response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "message"
+                  ],
+                  "properties": {
+                    "message": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Device approval or User role denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FrappeError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Device or record not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FrappeError"
+                }
+              }
+            }
+          },
+          "417": {
+            "description": "Localized validation error; no writes from the failed batch are committed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FrappeError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Concurrent write conflict. Retain the queue and retry the same event IDs.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FrappeError"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "name",
+            "in": "query",
+            "required": true,
+            "description": "",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/method/cutting.reporting.report_detail": {
+      "get": {
+        "operationId": "cutting_reporting_report_detail",
+        "summary": "Read Cutting report (at most 7 inclusive days)",
+        "tags": [
+          "Desk"
+        ],
+        "security": [
+          {
+            "FrappeToken": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Frappe method response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "message"
+                  ],
+                  "properties": {
+                    "message": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Device approval or User role denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FrappeError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Device or record not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FrappeError"
+                }
+              }
+            }
+          },
+          "417": {
+            "description": "Localized validation error; no writes from the failed batch are committed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FrappeError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Concurrent write conflict. Retain the queue and retry the same event IDs.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FrappeError"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "from_date",
+            "in": "query",
+            "required": true,
+            "description": "Site-local date.",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to_date",
+            "in": "query",
+            "required": true,
+            "description": "Site-local date. Reversed bounds are normalized.",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "filters",
+            "in": "query",
+            "required": false,
+            "description": "JSON object. Supported keys: company, device, product, color, market, product_code_identifier, company_code, sample_code, device_name, event_no.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/method/cutting.reporting.report_summary": {
+      "get": {
+        "operationId": "cutting_reporting_report_summary",
+        "summary": "Read Cutting report (at most 31 inclusive days)",
+        "tags": [
+          "Desk"
+        ],
+        "security": [
+          {
+            "FrappeToken": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Frappe method response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "message"
+                  ],
+                  "properties": {
+                    "message": {
+                      "$ref": "#/components/schemas/ReportSummary"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Device approval or User role denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FrappeError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Device or record not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FrappeError"
+                }
+              }
+            }
+          },
+          "417": {
+            "description": "Localized validation error; no writes from the failed batch are committed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FrappeError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Concurrent write conflict. Retain the queue and retry the same event IDs.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FrappeError"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "from_date",
+            "in": "query",
+            "required": true,
+            "description": "Site-local date.",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to_date",
+            "in": "query",
+            "required": true,
+            "description": "Site-local date. Reversed bounds are normalized.",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "filters",
+            "in": "query",
+            "required": false,
+            "description": "JSON object. Supported keys: company, device, product, color, market, product_code_identifier, company_code, sample_code, device_name, event_no.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/method/cutting.reporting.admin_summary": {
+      "get": {
+        "operationId": "cutting_reporting_admin_summary",
+        "summary": "Aggregate by creation date, product, color and market",
+        "tags": [
+          "Desk"
+        ],
+        "security": [
+          {
+            "FrappeToken": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Frappe method response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "message"
+                  ],
+                  "properties": {
+                    "message": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Device approval or User role denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FrappeError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Device or record not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FrappeError"
+                }
+              }
+            }
+          },
+          "417": {
+            "description": "Localized validation error; no writes from the failed batch are committed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FrappeError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Concurrent write conflict. Retain the queue and retry the same event IDs.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FrappeError"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "created_from",
+            "in": "query",
+            "required": false,
+            "description": "",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "created_to",
+            "in": "query",
+            "required": false,
+            "description": "",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filters",
+            "in": "query",
+            "required": false,
+            "description": "JSON object. Supported keys: company, device, product, color, market, product_code_identifier, company_code, sample_code, device_name, event_no.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "trash",
+            "in": "query",
+            "required": false,
+            "description": "",
+            "schema": {
+              "type": "integer",
+              "enum": [
+                0,
+                1
+              ],
+              "default": 0
+            }
+          }
+        ]
+      }
+    },
+    "/api/method/factory_management.api.register_device": {
+      "post": {
+        "operationId": "factory_management_api_register_device",
+        "summary": "Shared Factory Management device register_device",
+        "tags": [
+          "Shared"
+        ],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Successful Frappe method response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "message"
+                  ],
+                  "properties": {
+                    "message": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Device approval or User role denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FrappeError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Device or record not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FrappeError"
+                }
+              }
+            }
+          },
+          "417": {
+            "description": "Localized validation error; no writes from the failed batch are committed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FrappeError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Concurrent write conflict. Retain the queue and retry the same event IDs.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FrappeError"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "X-Factory-Data-Epoch",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "generation returned by cutting.api.device_epoch; required when non-empty."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "device_name": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/method/factory_management.api.check_device": {
+      "post": {
+        "operationId": "factory_management_api_check_device",
+        "summary": "Shared Factory Management device check_device",
+        "tags": [
+          "Shared"
+        ],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Successful Frappe method response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "message"
+                  ],
+                  "properties": {
+                    "message": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Device approval or User role denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FrappeError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Device or record not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FrappeError"
+                }
+              }
+            }
+          },
+          "417": {
+            "description": "Localized validation error; no writes from the failed batch are committed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FrappeError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Concurrent write conflict. Retain the queue and retry the same event IDs.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FrappeError"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "X-Factory-Data-Epoch",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "generation returned by cutting.api.device_epoch; required when non-empty."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "device_name": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "SyncItem": {
+        "type": "object",
+        "required": [
+          "local_event_id",
+          "product",
+          "color",
+          "market",
+          "product_code_identifier",
+          "quantity"
+        ],
+        "properties": {
+          "local_event_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "product": {
+            "type": "string"
+          },
+          "color": {
+            "type": "string"
+          },
+          "market": {
+            "type": "string"
+          },
+          "product_code_identifier": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "quantity": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 2147483647
+          },
+          "occurred_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "UTC ISO timestamp; defaults to the server time."
+          }
+        }
+      },
+      "DeleteItem": {
+        "type": "object",
+        "required": [
+          "local_event_id"
+        ],
+        "properties": {
+          "local_event_id": {
+            "type": "string",
+            "maxLength": 100
+          }
+        }
+      },
+      "FrappeError": {
+        "type": "object",
+        "properties": {
+          "exc_type": {
+            "type": "string"
+          },
+          "_server_messages": {
+            "type": "string",
+            "description": "JSON-encoded localized Frappe messages."
+          }
+        }
+      },
+      "SyncResult": {
+        "type": "object",
+        "required": [
+          "accepted_local_event_ids",
+          "accepted_update_local_event_ids",
+          "accepted_delete_local_event_ids"
+        ],
+        "properties": {
+          "accepted_local_event_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "accepted_update_local_event_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "accepted_delete_local_event_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "Catalog": {
+        "type": "object",
+        "required": [
+          "products",
+          "colors",
+          "markets",
+          "seasons",
+          "product_variants"
+        ],
+        "properties": {
+          "products": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "colors": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "markets": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "seasons": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "product_variants": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        }
+      },
+      "ReportSummary": {
+        "type": "object",
+        "required": [
+          "metadata",
+          "columns",
+          "rows",
+          "rawRows"
+        ],
+        "properties": {
+          "metadata": {
+            "type": "object"
+          },
+          "columns": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "key": {
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "rawRows": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "FrappeToken": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "Authorization",
+        "description": "token <api_key>:<api_secret>. Keep credentials in local secret variables."
+      }
+    }
+  }
+}

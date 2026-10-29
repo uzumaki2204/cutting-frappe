@@ -1,0 +1,186 @@
+{
+  "doctype": "DocType",
+  "name": "Cutting Record",
+  "module": "Cutting",
+  "custom": 0,
+  "autoname": "hash",
+  "allow_import": 1,
+  "track_changes": 1,
+  "sort_field": "creation",
+  "sort_order": "DESC",
+  "fields": [
+    {
+      "fieldname": "product",
+      "label": "Product",
+      "fieldtype": "Link",
+      "options": "Product",
+      "reqd": 1,
+      "in_list_view": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "color",
+      "label": "Color",
+      "fieldtype": "Link",
+      "options": "Color",
+      "reqd": 1,
+      "in_list_view": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "market",
+      "label": "Market",
+      "fieldtype": "Link",
+      "options": "Market",
+      "reqd": 1,
+      "in_list_view": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "product_code_identifier",
+      "label": "Plan Code",
+      "fieldtype": "Data",
+      "reqd": 1,
+      "length": 100,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "quantity",
+      "label": "Quantity",
+      "fieldtype": "Int",
+      "reqd": 1,
+      "in_list_view": 1,
+      "non_negative": 1
+    },
+    {
+      "fieldname": "occurred_at",
+      "label": "Occurred At",
+      "fieldtype": "Datetime",
+      "reqd": 1,
+      "in_list_view": 1,
+      "in_standard_filter": 1,
+      "read_only_depends_on": "eval:!doc.__islocal"
+    },
+    {
+      "fieldname": "company",
+      "label": "Company",
+      "fieldtype": "Link",
+      "options": "Company",
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "device",
+      "label": "Factory Device",
+      "fieldtype": "Link",
+      "options": "Factory Device",
+      "in_standard_filter": 1,
+      "read_only_depends_on": "eval:!doc.__islocal"
+    },
+    {
+      "fieldname": "device_uid",
+      "label": "Device UID",
+      "fieldtype": "Data",
+      "length": 100,
+      "read_only_depends_on": "eval:!doc.__islocal"
+    },
+    {
+      "fieldname": "local_event_id",
+      "label": "Local Event ID",
+      "fieldtype": "Data",
+      "length": 100,
+      "read_only_depends_on": "eval:!doc.__islocal"
+    },
+    {
+      "fieldname": "event_uid",
+      "label": "Event UID",
+      "fieldtype": "Data",
+      "length": 64,
+      "unique": 1,
+      "hidden": 1,
+      "read_only": 1,
+      "no_copy": 1
+    },
+    {
+      "fieldname": "source",
+      "label": "Source",
+      "fieldtype": "Select",
+      "options": "Cutting\nImport",
+      "default": "Import",
+      "reqd": 1,
+      "in_standard_filter": 1,
+      "read_only_depends_on": "eval:!doc.__islocal"
+    },
+    {
+      "fieldname": "is_deleted",
+      "label": "Is Deleted",
+      "fieldtype": "Check",
+      "default": "0",
+      "read_only": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "deleted_at",
+      "label": "Deleted At",
+      "fieldtype": "Datetime",
+      "read_only": 1
+    },
+    {
+      "fieldname": "deleted_by",
+      "label": "Deleted By",
+      "fieldtype": "Data",
+      "read_only": 1
+    },
+    {
+      "fieldname": "note",
+      "label": "Note",
+      "fieldtype": "Small Text"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "Cutting Manager",
+      "read": 1,
+      "create": 1,
+      "write": 1,
+      "report": 1,
+      "export": 1,
+      "import": 1,
+      "print": 1
+    },
+    {
+      "role": "Cutting Viewer",
+      "read": 1,
+      "report": 1,
+      "export": 1,
+      "print": 1
+    },
+    {
+      "role": "System Manager",
+      "read": 1,
+      "create": 1,
+      "write": 1,
+      "report": 1,
+      "export": 1,
+      "import": 1,
+      "print": 1
+    }
+  ],
+  "field_order": [
+    "product",
+    "color",
+    "market",
+    "product_code_identifier",
+    "quantity",
+    "occurred_at",
+    "company",
+    "device",
+    "device_uid",
+    "local_event_id",
+    "event_uid",
+    "source",
+    "is_deleted",
+    "deleted_at",
+    "deleted_by",
+    "note"
+  ]
+}

@@ -1,0 +1,29 @@
+Cutting Record,Bản ghi Cutting
+Cutting History,Lịch sử Cutting
+Cutting Manager,Quản lý Cutting
+Cutting Viewer,Xem Cutting
+Cutting Reports,Báo cáo Cutting
+Product,Sản phẩm
+Color,Màu
+Market,Thị trường
+Company,Công ty
+Factory Device,Thiết bị nhà máy
+Device UID,Mã UID thiết bị
+Local Event ID,Mã sự kiện cục bộ
+Event UID,Mã sự kiện duy nhất
+Plan Code,Mã kế hoạch
+Quantity,Số lượng
+Occurred At,Thời điểm phát sinh
+Source,Nguồn
+Is Deleted,Đã xóa
+Deleted At,Thời điểm xóa
+Deleted By,Người xóa
+Note,Ghi chú
+Record,Bản ghi
+Action,Thao tác
+Actor,Người thực hiện
+Create,Tạo
+Update,Cập nhật
+Delete,Xóa
+Restore,Khôi phục
+Import,Nhập dữ liệu

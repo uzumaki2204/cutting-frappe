@@ -1,0 +1,20 @@
+$kind: http-request
+url: '{{baseUrl}}/api/method/cutting.api.soft_delete'
+method: POST
+headers:
+  Accept: application/json
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "name": "{{recordName}}"
+    }
+order: 5000
+examples: './.resources/Move a Cutting record to Trash.resources/examples'
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("Expected HTTP status", () => pm.response.to.have.status(200));
+      pm.test("Frappe message envelope", () => pm.expect(pm.response.json()).to.have.property("message"));

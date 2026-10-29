@@ -1,0 +1,9 @@
+{
+  "doctype": "Page",
+  "name": "cutting-reports",
+  "page_name": "cutting-reports",
+  "title": "Cutting Reports",
+  "module": "Cutting",
+  "standard": "Yes",
+  "roles": [{"role": "Cutting Manager"}, {"role": "Cutting Viewer"}, {"role": "System Manager"}]
+}

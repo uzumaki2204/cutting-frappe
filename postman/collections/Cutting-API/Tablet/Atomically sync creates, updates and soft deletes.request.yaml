@@ -1,0 +1,38 @@
+$kind: http-request
+url: '{{baseUrl}}/api/method/cutting.api.sync_records'
+method: POST
+headers:
+  Accept: application/json
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "id": "{{deviceId}}",
+      "records": [
+        {
+          "local_event_id": "{{eventId}}",
+          "product": "{{productId}}",
+          "color": "{{colorId}}",
+          "market": "{{marketId}}",
+          "product_code_identifier": "{{planCode}}",
+          "quantity": 1,
+          "occurred_at": "{{occurredAt}}"
+        }
+      ],
+      "updates": [],
+      "deletes": []
+    }
+order: 4000
+examples: './.resources/Atomically sync creates, updates and soft deletes.resources/examples'
+scripts:
+  - type: beforeRequest
+    language: text/javascript
+    code: |-
+      if (!pm.collectionVariables.get("occurredAt")) pm.collectionVariables.set("occurredAt", new Date().toISOString());
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("Expected HTTP status", () => pm.response.to.have.status(200));
+      pm.test("Frappe message envelope", () => pm.expect(pm.response.json()).to.have.property("message"));
+      pm.test("Event acknowledged", () => pm.expect(pm.response.json().message.accepted_local_event_ids).to.include(pm.variables.get("eventId")));

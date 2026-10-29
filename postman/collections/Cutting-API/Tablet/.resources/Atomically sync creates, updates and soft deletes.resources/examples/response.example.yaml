@@ -1,0 +1,25 @@
+$kind: http-example
+name: 'Success'
+request:
+  method: POST
+  url: '{{baseUrl}}/api/method/cutting.api.sync_records'
+response:
+  statusCode: 200
+  statusText: OK
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "message": {
+          "accepted_count": 1,
+          "accepted_local_event_ids": [
+            "cutting-example-1"
+          ],
+          "accepted_update_count": 0,
+          "accepted_update_local_event_ids": [],
+          "accepted_delete_count": 0,
+          "accepted_delete_local_event_ids": []
+        }
+      }

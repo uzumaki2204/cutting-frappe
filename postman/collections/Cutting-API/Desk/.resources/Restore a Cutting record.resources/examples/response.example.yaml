@@ -1,0 +1,19 @@
+$kind: http-example
+name: 'Success'
+request:
+  method: POST
+  url: '{{baseUrl}}/api/method/cutting.api.restore'
+response:
+  statusCode: 200
+  statusText: OK
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "message": {
+          "name": "example-record",
+          "notice": "Record restored."
+        }
+      }

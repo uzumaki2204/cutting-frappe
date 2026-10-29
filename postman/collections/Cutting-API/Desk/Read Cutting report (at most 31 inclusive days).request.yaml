@@ -1,0 +1,19 @@
+$kind: http-request
+url: '{{baseUrl}}/api/method/cutting.reporting.report_summary?from_date={{fromDate}}&to_date={{toDate}}'
+method: GET
+headers:
+  Accept: application/json
+queryParams:
+  - key: from_date
+    value: '{{fromDate}}'
+  - key: to_date
+    value: '{{toDate}}'
+order: 3000
+examples: './.resources/Read Cutting report (at most 31 inclusive days).resources/examples'
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("Expected HTTP status", () => pm.response.to.have.status(200));
+      pm.test("Frappe message envelope", () => pm.expect(pm.response.json()).to.have.property("message"));
+      pm.test("Workbook report shape", () => { const m = pm.response.json().message; pm.expect(m.rows).to.be.an("array"); pm.expect(m.rawRows).to.be.an("array"); });

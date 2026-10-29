@@ -1,0 +1,22 @@
+$kind: http-example
+name: 'Success'
+request:
+  method: GET
+  url: '{{baseUrl}}/api/method/cutting.api.get_device_records?id={{deviceId}}'
+response:
+  statusCode: 200
+  statusText: OK
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "message": [
+          {
+            "name": "example-record",
+            "local_event_id": "cutting-example-1",
+            "quantity": 1
+          }
+        ]
+      }

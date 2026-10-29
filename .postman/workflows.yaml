@@ -1,0 +1,6 @@
+workflows:
+  syncSpecToCollection:
+    - spec: ../docs/openapi.json
+      collection: ../postman/collections/Cutting-API
+      options:
+        folderStrategy: Tags

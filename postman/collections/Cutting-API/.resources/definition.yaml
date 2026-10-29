@@ -1,0 +1,16 @@
+$kind: collection
+name: Cutting-API
+description: Cutting API contract requests with reusable assertions. Use a dedicated test device and a local secret environment.
+variables:
+  baseUrl: 'http://127.0.0.1:8000'
+  deviceId: ''
+  productId: ''
+  colorId: ''
+  marketId: ''
+  eventId: 'cutting-example-1'
+  planCode: 'CUTTING-EXAMPLE'
+  recordName: ''
+  fromDate: '2026-10-29'
+  toDate: '2026-10-29'
+  generation: ''
+  occurredAt: ''

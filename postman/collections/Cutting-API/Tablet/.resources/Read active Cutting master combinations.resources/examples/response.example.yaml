@@ -1,0 +1,25 @@
+$kind: http-example
+name: 'Success'
+request:
+  method: GET
+  url: '{{baseUrl}}/api/method/cutting.api.bootstrap?id={{deviceId}}'
+response:
+  statusCode: 200
+  statusText: OK
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "message": {
+          "catalog": {
+            "products": [],
+            "colors": [],
+            "markets": [],
+            "seasons": [],
+            "product_variants": []
+          },
+          "catalog_version": "example"
+        }
+      }

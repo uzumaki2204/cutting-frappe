@@ -1,0 +1,22 @@
+$kind: http-request
+url: '{{baseUrl}}/api/method/factory_management.api.register_device'
+method: POST
+headers:
+  Accept: application/json
+  X-Factory-Data-Epoch: "{{generation}}"
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "id": "{{deviceId}}",
+      "device_name": "Cutting"
+    }
+order: 1000
+examples: './.resources/Shared Factory Management device register_device.resources/examples'
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("Expected HTTP status", () => pm.response.to.have.status(200));
+      pm.test("Frappe message envelope", () => pm.expect(pm.response.json()).to.have.property("message"));

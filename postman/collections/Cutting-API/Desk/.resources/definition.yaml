@@ -1,0 +1,9 @@
+$kind: collection
+name: Desk
+order: 2000
+auth:
+  type: apikey
+  credentials:
+    key: Authorization
+    value: "{{apiKey}}"
+    in: header

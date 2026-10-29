@@ -1,0 +1,19 @@
+$kind: http-example
+name: 'Success'
+request:
+  method: GET
+  url: '{{baseUrl}}/api/method/cutting.api.translations?lang=en'
+response:
+  statusCode: 200
+  statusText: OK
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "message": {
+          "ui.title": "Cutting",
+          "error.device_pending": "Device is not approved or is inactive."
+        }
+      }

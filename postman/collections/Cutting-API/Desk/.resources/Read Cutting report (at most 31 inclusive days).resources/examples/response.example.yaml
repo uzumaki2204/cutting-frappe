@@ -1,0 +1,24 @@
+$kind: http-example
+name: 'Success'
+request:
+  method: GET
+  url: '{{baseUrl}}/api/method/cutting.reporting.report_summary?from_date={{fromDate}}&to_date={{toDate}}'
+response:
+  statusCode: 200
+  statusText: OK
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "message": {
+          "metadata": {
+            "sourceRowCount": 0,
+            "groupedRowCount": 0
+          },
+          "columns": [],
+          "rows": [],
+          "rawRows": []
+        }
+      }

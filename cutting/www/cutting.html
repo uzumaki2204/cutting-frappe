@@ -1,0 +1,57 @@
+{% extends "templates/base.html" %}
+{% block head %}{{ include_style('desk.bundle.css') }}{% endblock %}
+{% block navbar %}{% endblock %}
+{% block footer %}{% endblock %}
+{% block content %}
+<main class="container py-4" id="cutting-app" data-lang="{{ lang }}">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>{{ texts['ui.title'] }}</h1>
+    <span id="connection-status" class="indicator-pill gray" role="status" aria-live="polite"></span>
+  </div>
+  <div id="notice" class="alert alert-info" role="status" aria-live="polite" hidden></div>
+  <section class="form-section mb-4" aria-label="{{ texts['ui.device'] }}">
+    <div class="row align-items-end">
+      <div class="col-md-6 form-group">
+        <label class="control-label" for="device-id">{{ texts['ui.device_id'] }}</label>
+        <input id="device-id" class="form-control" autocomplete="off" maxlength="36">
+      </div>
+      <div class="col-md-6 form-group">
+        <button id="register-device" type="button" class="btn btn-default">{{ texts['ui.register'] }}</button>
+        <button id="check-device" type="button" class="btn btn-default">{{ texts['ui.check'] }}</button>
+        <span id="device-status" class="indicator-pill gray" aria-live="polite"></span>
+      </div>
+    </div>
+  </section>
+  <form id="entry-form" class="form-section" novalidate>
+    <fieldset id="entry-fields" disabled>
+      <div class="row">
+        <div class="col-md-6 form-group"><label class="control-label" for="season">{{ texts['ui.season'] }}</label><select id="season" class="form-control"></select></div>
+        <div class="col-md-6 form-group"><label class="control-label" for="product">{{ texts['ui.product'] }}</label><select id="product" class="form-control" required></select></div>
+        <div class="col-md-6 form-group"><label class="control-label" for="market">{{ texts['ui.market'] }}</label><select id="market" class="form-control" required></select></div>
+        <div class="col-md-6 form-group"><label class="control-label" for="color">{{ texts['ui.color'] }}</label><select id="color" class="form-control" required></select></div>
+        <div class="col-md-6 form-group"><label class="control-label" for="identifier">{{ texts['ui.identifier'] }}</label><input id="identifier" class="form-control" maxlength="100" autocomplete="off" required></div>
+        <div class="col-md-6 form-group"><label class="control-label" for="quantity">{{ texts['ui.quantity'] }}</label><input id="quantity" class="form-control" type="number" min="1" step="1" inputmode="numeric" required></div>
+      </div>
+      <div class="mb-4">
+        <button type="submit" class="btn btn-primary">{{ texts['ui.save'] }}</button>
+        <button id="cancel-edit" type="button" class="btn btn-default" hidden>{{ texts['ui.cancel'] }}</button>
+      </div>
+    </fieldset>
+  </form>
+  <section aria-labelledby="records-title" class="mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h2 id="records-title" class="h4">{{ texts['ui.records'] }}</h2>
+      <div><span id="pending-count" class="text-muted mr-2"></span><button id="sync" type="button" class="btn btn-default">{{ texts['ui.sync'] }}</button></div>
+    </div>
+    <div class="table-responsive"><table class="table table-bordered"><thead><tr>
+      <th scope="col">{{ texts['ui.date'] }}</th><th scope="col">{{ texts['ui.product'] }}</th><th scope="col">{{ texts['ui.market'] }}</th><th scope="col">{{ texts['ui.color'] }}</th><th scope="col">{{ texts['ui.identifier'] }}</th><th scope="col">{{ texts['ui.quantity'] }}</th><th scope="col">{{ texts['ui.status'] }}</th><th scope="col">{{ texts['ui.actions'] }}</th>
+    </tr></thead><tbody id="records-body"></tbody></table></div>
+    <p id="empty-records" class="text-muted">{{ texts['ui.no_records'] }}</p>
+  </section>
+</main>
+<script id="cutting-texts" type="application/json">{{ texts_json | safe }}</script>
+{% endblock %}
+{% block script %}
+<script src="/assets/cutting/js/client-core.js"></script>
+<script src="/assets/cutting/js/cutting.js"></script>
+{% endblock %}

@@ -1,0 +1,17 @@
+$kind: http-request
+url: '{{baseUrl}}/api/method/cutting.api.bootstrap?id={{deviceId}}'
+method: GET
+headers:
+  Accept: application/json
+queryParams:
+  - key: id
+    value: '{{deviceId}}'
+order: 3000
+examples: './.resources/Read active Cutting master combinations.resources/examples'
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("Expected HTTP status", () => pm.response.to.have.status(200));
+      pm.test("Frappe message envelope", () => pm.expect(pm.response.json()).to.have.property("message"));
+      pm.test("Variant catalog", () => pm.expect(pm.response.json().message.catalog.product_variants).to.be.an("array"));

@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cutting"
+version = "0.1.0"
+description = "Cutting records for Frappe 16"
+requires-python = ">=3.14"
+
+[tool.bench.frappe-dependencies]
+frappe = ">=16.53.0,<17.0.0"
+factory_management = ">=0.1.29,<0.2.0"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["cutting*"]
+
+[tool.setuptools.package-data]
+cutting = ["*.txt", "*.json", "public/js/*.js", "public/*.json", "www/*.html", "translations/*.csv", "cutting/doctype/*/*.json", "cutting/doctype/*/*.js", "cutting/page/*/*.json", "cutting/page/*/*.js"]

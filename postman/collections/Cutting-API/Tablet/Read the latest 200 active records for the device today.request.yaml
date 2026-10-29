@@ -1,0 +1,20 @@
+$kind: http-request
+url: '{{baseUrl}}/api/method/cutting.api.get_device_records?id={{deviceId}}'
+method: GET
+headers:
+  Accept: application/json
+queryParams:
+  - key: id
+    value: '{{deviceId}}'
+order: 5000
+examples: './.resources/Read the latest 200 active records for the device today.resources/examples'
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("Expected HTTP status", () => pm.response.to.have.status(200));
+      pm.test("Frappe message envelope", () => pm.expect(pm.response.json()).to.have.property("message"));
+      const rows = pm.response.json().message;
+      pm.test("Idempotent record count", () => pm.expect(rows.filter(r => r.local_event_id === pm.variables.get("eventId"))).to.have.lengthOf(1));
+      const record = rows.find(r => r.local_event_id === pm.variables.get("eventId"));
+      if (record) pm.collectionVariables.set("recordName", record.name);

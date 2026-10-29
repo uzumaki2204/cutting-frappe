@@ -1,0 +1,16 @@
+$kind: http-request
+url: '{{baseUrl}}/api/method/cutting.api.bootstrap?id=00000000-0000-0000-0000-000000000000'
+method: GET
+headers:
+  Accept: application/json
+queryParams:
+  - key: id
+    value: '00000000-0000-0000-0000-000000000000'
+order: 6000
+examples: './.resources/Reject unknown device.resources/examples'
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("Expected HTTP status", () => pm.response.to.have.status(404));
+      pm.test("Unknown device rejected", () => pm.expect(pm.response.json().exc_type).to.equal("DoesNotExistError"));

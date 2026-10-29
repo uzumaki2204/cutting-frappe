@@ -1,0 +1,17 @@
+$kind: http-example
+name: 'Unknown device'
+request:
+  method: GET
+  url: '{{baseUrl}}/api/method/cutting.api.bootstrap?id=00000000-0000-0000-0000-000000000000'
+response:
+  statusCode: 404
+  statusText: Not Found
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "exc_type": "DoesNotExistError",
+        "_server_messages": "[\"{\\\"message\\\": \\\"Device not found.\\\"}\"]"
+      }

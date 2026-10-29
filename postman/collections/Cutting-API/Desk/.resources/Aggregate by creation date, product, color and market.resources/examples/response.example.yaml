@@ -1,0 +1,23 @@
+$kind: http-example
+name: 'Success'
+request:
+  method: GET
+  url: '{{baseUrl}}/api/method/cutting.reporting.admin_summary?created_from={{fromDate}}&created_to={{toDate}}&trash=0'
+response:
+  statusCode: 200
+  statusText: OK
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "message": {
+          "totalRecords": 0,
+          "totalQuantity": 0,
+          "byCreatedDate": [],
+          "byProduct": [],
+          "byColor": [],
+          "byMarket": []
+        }
+      }
