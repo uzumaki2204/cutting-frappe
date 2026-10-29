@@ -14,7 +14,7 @@ def _fixtures():
     code = "CUTTEST-" + suffix
     company = frappe.get_doc({"doctype": "Company", "company_code": code, "company_name": code, "active": 1}).insert(ignore_permissions=True)
     product = frappe.get_doc({"doctype": "Product", "product_code": code, "product_name": code, "is_active": 1}).insert(ignore_permissions=True)
-    color = frappe.get_doc({"doctype": "Color", "color_code": code, "color_name": code, "color": "#" + suffix[:6], "is_active": 1}).insert(ignore_permissions=True)
+    color = frappe.get_doc({"doctype": "Color", "color_code": code, "color_name": code, "color": "#" + suffix[:6], "is_active": 1}).insert(ignore_permissions=True, set_name=code)
     market = frappe.get_doc({"doctype": "Market", "code": code, "name_en": code, "is_active": 1}).insert(ignore_permissions=True)
     size = frappe.get_doc({"doctype": "ProductSize", "size_label": code, "is_active": 1}).insert(ignore_permissions=True)
     frappe.get_doc({"doctype": "Product Variant", "product": product.name, "color": color.name, "market": market.name, "size": size.name, "is_active": 1}).insert(ignore_permissions=True)

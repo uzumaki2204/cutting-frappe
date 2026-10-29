@@ -13,7 +13,7 @@ class TestCutting(IntegrationTestCase):
         suffix = uuid.uuid4().hex[:10]
         self.company = frappe.get_doc({"doctype": "Company", "company_code": "CUT-" + suffix, "company_name": suffix, "active": 1}).insert()
         self.product = frappe.get_doc({"doctype": "Product", "product_code": "CUT-" + suffix, "product_name": suffix, "is_active": 1}).insert()
-        self.color = frappe.get_doc({"doctype": "Color", "color_code": "CUT-" + suffix, "color_name": suffix, "color": "#123456", "is_active": 1}).insert()
+        self.color = frappe.get_doc({"doctype": "Color", "color_code": "CUT-" + suffix, "color_name": suffix, "color": "#" + suffix[:6], "is_active": 1}).insert(set_name="CUT-" + suffix)
         self.market = frappe.get_doc({"doctype": "Market", "code": "CUT-" + suffix, "name_en": suffix, "is_active": 1}).insert()
         self.size = frappe.get_doc({"doctype": "ProductSize", "size_label": "CUT-" + suffix, "is_active": 1}).insert()
         frappe.get_doc({"doctype": "Product Variant", "product": self.product.name, "color": self.color.name, "market": self.market.name, "size": self.size.name, "is_active": 1}).insert()
