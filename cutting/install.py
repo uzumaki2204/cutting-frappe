@@ -13,6 +13,9 @@ ROLES = ("Cutting Manager", "Cutting Viewer")
 
 
 def before_install():
+    for doctype in ("Web Page", "Builder Page"):
+        if frappe.db.exists("DocType", doctype) and frappe.db.exists(doctype, {"route": "cutting", "published": 1}):
+            frappe.throw(message("error.route_conflict", doctype=doctype))
     for doctype in REQUIRED_DOCTYPES:
         if not frappe.db.exists("DocType", doctype):
             frappe.throw(message("error.missing_doctype", doctype=doctype))

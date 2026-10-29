@@ -6,6 +6,7 @@ App độc lập `cutting`, dùng chung master và Factory Device từ `factory_
 
 - Frappe `>=16.53.0,<17.0.0`, Python 3.14 và `factory_management >=0.1.29,<0.2.0` đã cài trên site.
 - Trong Pilot, thêm repo public `https://github.com/uzumaki2204/cutting-frappe`, chọn nhánh `version-16`, tên app `cutting`, rồi cài vào site đích.
+- Nếu đã có Web Page hoặc Builder Page xuất bản tại `/cutting`, lưu bản sao và tắt xuất bản trang cũ trước. Installer báo xung đột thay vì sửa nội dung trang có sẵn.
 - Chạy migrate và build assets theo quy trình Pilot, sau đó khởi động lại workload. Sao lưu database và public/private files trước khi cài/nâng cấp.
 - Gán `Cutting Manager` cho người quản lý hoặc `Cutting Viewer` cho người chỉ xem báo cáo. App cấp quyền Select master cho hai role này; quyền sửa master tiếp tục do app Factory Management quản lý.
 

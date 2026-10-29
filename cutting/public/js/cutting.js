@@ -72,7 +72,7 @@
     try {
       response = await fetch(`/api/method/${method}${post ? "" : `?${query}`}`, {
         method: post ? "POST" : "GET", credentials: "omit", cache: "no-store",
-        headers: { "Content-Type": "application/json", ...headers },
+        headers: { "Content-Type": "application/json", "Accept-Language": root.dataset.lang, ...headers },
         ...(post ? { body: JSON.stringify(args) } : {}),
       });
     } catch (_) { connected = false; throw new Error(t("ui.sync_failed")); }
