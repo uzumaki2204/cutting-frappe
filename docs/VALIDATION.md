@@ -28,3 +28,12 @@ Khi site có trang Builder hoặc Web Page cũ tại `/cutting`, cần tắt xu�
 - Gắn phiên bản package vào URL của hai script tablet để trình duyệt tải asset mới sau khi cập nhật app, thay vì tiếp tục dùng script cũ từ cache.
 - Render sẵn lựa chọn mặc định cho các dropdown để trang không hiện ô trống khi JavaScript chưa khởi tạo.
 - Kiểm tra thao tác trên trang đang chạy: mở hộp thoại cài đặt thiết bị, nút kết nối và toàn màn hình; xác nhận asset được tải với query version mới và không phát sinh lỗi JavaScript.
+
+## Popup thiết bị 0.1.5
+
+- Sao lưu site Pilot gồm database, cấu hình và public/private files trước khi xóa DocType tùy chỉnh `Cutting Device` cùng bản ghi thử. Xác nhận DocType đã hết và các `Factory Device` vẫn giữ nguyên.
+- Popup dùng `frappe.ui.Dialog` và `controls.bundle.js` trên trang public; không có CSS riêng. Đã kiểm tra trang không có lỗi JavaScript, popup ở desktop và viewport mobile 390×844 không tràn ngang, nút đóng trả focus về nút cài đặt.
+- Kiểm tra trên site: ID không tồn tại trả 404 và không tạo thiết bị; thiết bị Pending trả 403 và Device ID đang lưu không đổi. Smoke giao dịch rollback xác nhận Pending, inactive, thiếu công ty bị từ chối; thiết bị hợp lệ kích hoạt và tải bootstrap; sync, import mẫu, lịch sử và báo cáo vẫn đạt. Sau smoke, các `Factory Device` vận hành vẫn giữ nguyên.
+- Postman: request ID không tồn tại đạt 2 assertion, collection 15 request lint sạch. 9 test JavaScript đạt cho hàng đợi, QR UUID/JSON/URL và xóa cache có phạm vi Cutting. Wheel `0.1.5` build thành công.
+- Kiểm tra toast lỗi tiếng Việt và tiếng Anh; `Quét QR` trên HTTP báo camera không khả dụng và cho nhập tay. Trên browser mô phỏng secure context/camera, QR JSON điền đúng ID nhưng không tự kích hoạt. Chưa kiểm tra camera vật lý qua HTTPS.
+- Xóa cache: hủy giữ nguyên dữ liệu; xác nhận xóa cả hàng đợi Cutting chưa đồng bộ và giữ khóa localStorage ứng dụng khác. Admin cần cấu hình/duyệt `Factory Device` trước khi kích hoạt vận hành.
