@@ -22,3 +22,9 @@ Khi site có trang Builder hoặc Web Page cũ tại `/cutting`, cần tắt xu�
 - Thêm logo Kim Thanh Group và icon toàn màn hình, kết nối, cài đặt thiết bị. Card nhập và card bản ghi phân biệt bằng utility class mặc định của Desk; không thêm CSS riêng.
 - Đã xem trang đang chạy ở 267×844, 390×844, 1024×768 và 1440×900; không tràn ngang. Toàn màn hình bật/tắt, nút kết nối kiểm tra được API, hộp thoại thiết bị mở/đóng và trả focus đúng.
 - Đã thao tác bộ lọc ID, mã hàng và phân trang bằng dữ liệu giả chỉ trong localStorage của browser offline; không gửi bản ghi lên site. Không chạy lại bộ test tự động cho thay đổi giao diện này.
+
+## Khắc phục tải JavaScript 0.1.3
+
+- Gắn phiên bản package vào URL của hai script tablet để trình duyệt tải asset mới sau khi cập nhật app, thay vì tiếp tục dùng script cũ từ cache.
+- Render sẵn lựa chọn mặc định cho các dropdown để trang không hiện ô trống khi JavaScript chưa khởi tạo.
+- Kiểm tra thao tác trên trang đang chạy: mở hộp thoại cài đặt thiết bị, nút kết nối và toàn màn hình; xác nhận asset được tải với query version mới và không phát sinh lỗi JavaScript.

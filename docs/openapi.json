@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Cutting API",
-    "version": "0.1.2",
+    "version": "0.1.3",
     "description": "Standalone Cutting for Frappe 16. Tablet calls use approved Factory Device IDs. Desk calls use Frappe User roles. No .NET API compatibility routes or machine ingest."
   },
   "servers": [

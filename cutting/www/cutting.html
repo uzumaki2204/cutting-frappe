@@ -49,15 +49,15 @@
             <fieldset id="entry-fields" disabled>
               <div class="form-group mb-3">
                 <label class="control-label" for="product">{{ texts['ui.product_code'] }}</label>
-                <select id="product" class="form-control" required></select>
+                <select id="product" class="form-control" required><option value="">{{ texts['ui.select'] }}</option></select>
               </div>
               <div class="form-group mb-3">
                 <label class="control-label" for="market">{{ texts['ui.market'] }}</label>
-                <select id="market" class="form-control" required></select>
+                <select id="market" class="form-control" required><option value="">{{ texts['ui.select'] }}</option></select>
               </div>
               <div class="form-group mb-3">
                 <label class="control-label" for="color">{{ texts['ui.color'] }}</label>
-                <select id="color" class="form-control" required></select>
+                <select id="color" class="form-control" required><option value="">{{ texts['ui.select'] }}</option></select>
               </div>
               <div class="form-group mb-3">
                 <label class="control-label" for="identifier">{{ texts['ui.product_identifier'] }}</label>
@@ -98,15 +98,15 @@
           <div class="row">
             <div class="col-md-4 form-group mb-2">
               <label class="sr-only" for="filter-product">{{ texts['ui.all_products'] }}</label>
-              <select id="filter-product" class="form-control" aria-label="{{ texts['ui.all_products'] }}"></select>
+              <select id="filter-product" class="form-control" aria-label="{{ texts['ui.all_products'] }}"><option value="">{{ texts['ui.all_products'] }}</option></select>
             </div>
             <div class="col-md-4 form-group mb-2">
               <label class="sr-only" for="filter-color">{{ texts['ui.all_colors'] }}</label>
-              <select id="filter-color" class="form-control" aria-label="{{ texts['ui.all_colors'] }}"></select>
+              <select id="filter-color" class="form-control" aria-label="{{ texts['ui.all_colors'] }}"><option value="">{{ texts['ui.all_colors'] }}</option></select>
             </div>
             <div class="col-md-4 form-group mb-2">
               <label class="sr-only" for="filter-market">{{ texts['ui.all_markets'] }}</label>
-              <select id="filter-market" class="form-control" aria-label="{{ texts['ui.all_markets'] }}"></select>
+              <select id="filter-market" class="form-control" aria-label="{{ texts['ui.all_markets'] }}"><option value="">{{ texts['ui.all_markets'] }}</option></select>
             </div>
             <div class="col-md-4 form-group mb-2">
               <label class="small text-muted mb-1" for="filter-from">{{ texts['ui.from'] }}</label>
@@ -153,6 +153,6 @@
 <script id="cutting-texts" type="application/json">{{ texts_json | safe }}</script>
 {% endblock %}
 {% block script %}
-<script src="/assets/cutting/js/client-core.js"></script>
-<script src="/assets/cutting/js/cutting.js"></script>
+<script src="/assets/cutting/js/client-core.js?v={{ asset_version }}"></script>
+<script src="/assets/cutting/js/cutting.js?v={{ asset_version }}"></script>
 {% endblock %}
