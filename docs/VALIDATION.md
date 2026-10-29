@@ -1,0 +1,14 @@
+# Kiểm chứng bản 0.1.0
+
+Ngày kiểm tra: 2026-10-29. Môi trường: Frappe 16.53.0, Python 3.14, Factory Management 0.1.29. Các kiểm tra có dữ liệu dùng site thử riêng, chỉ tạo dữ liệu giả.
+
+- 9 integration test đạt: gửi lại sự kiện, rollback lô lỗi, thiết bị chưa duyệt, master/variant ngừng hoạt động, lịch sử chỉ ghi thêm, xóa/khôi phục, import thiếu thiết bị, quyền Data Import của manager, giới hạn báo cáo và chuyển đổi UTC/giờ site.
+- 7 test hàng đợi JavaScript đạt, gồm sửa/xóa trong lúc request đang gửi và bảo toàn thay đổi chưa đồng bộ.
+- Postman Tablet: 6 request, 16 assertion đạt. Collection 14 request lint không lỗi/cảnh báo.
+- Native Data Import: CSV và XLSX tạo bản ghi thiếu thiết bị thành công; Link sản phẩm không tồn tại bị từ chối. XLSX được kiểm tra qua File upload như Desk; CLI XLSX của bản Frappe đang chạy có lỗi đọc binary nên không dùng đường CLI cho XLSX.
+- Đã thao tác tablet tạo/sửa/xóa, Desk khôi phục và xem đủ Create/Update/Delete/Restore; trang báo cáo và form Data Import mở được bằng role Cutting Manager.
+- Đã xem giao diện ở 390×844, 1024×768 và 1440×900. Không tràn ngang toàn trang; bảng cuộn bên trong. Nhãn input đầy đủ, focus bàn phím có viền mặc định. Tỷ lệ tương phản đo được: nhãn 7.81:1, nút chính 17.93:1, trạng thái xanh 4.54:1.
+- Đã nhập khi offline với tab còn mở, kiểm tra hàng đợi được giữ trong localStorage, trở lại online tự gửi thành công và hàng đợi về 0. Không hỗ trợ mở lại trang khi offline trên HTTP.
+- Package wheel, build assets, migrate lặp lại và smoke test sau cài đạt. Smoke tạo tablet/import mẫu, kiểm tra idempotency/lịch sử/báo cáo rồi rollback toàn bộ.
+
+Khi site có trang Builder hoặc Web Page cũ tại `/cutting`, cần tắt xuất bản trang cũ trước để URL đi vào app. Installer phát hiện xung đột; không ghi đè nội dung trang cũ. Không chuyển dữ liệu SQL hoặc hàng đợi của phần mềm cũ.
