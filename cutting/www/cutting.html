@@ -6,7 +6,7 @@
 <main class="container-fluid py-3 min-vh-100" id="cutting-app" data-lang="{{ lang }}">
   <header class="d-flex justify-content-between align-items-center border-bottom bg-white mb-3">
     <img class="d-none d-sm-block" src="/assets/cutting/images/logo-kimthanhgroup.png" width="160" height="40" alt="{{ texts['ui.logo_alt'] }}">
-    <img class="d-sm-none" src="/assets/cutting/images/logo-kimthanhgroup.png" width="132" height="33" alt="{{ texts['ui.logo_alt'] }}">
+    <img class="d-sm-none" src="/assets/cutting/images/logo-kimthanhgroup.png" width="124" height="31" alt="{{ texts['ui.logo_alt'] }}">
     <div class="d-flex align-items-center">
       <button id="fullscreen-button" type="button" class="btn btn-default btn-sm mr-1" aria-label="{{ texts['ui.fullscreen'] }}" title="{{ texts['ui.fullscreen'] }}">
         <svg id="fullscreen-enter-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H3v5M16 3h5v5M21 16v5h-5M8 21H3v-5M3 8l7-7M21 8l-7-7M21 16l-7 7M3 16l7 7"/></svg>
@@ -78,11 +78,11 @@
     </aside>
 
     <section class="col-lg-9 col-xl-10" aria-labelledby="records-title">
-      <div class="card bg-white shadow-sm h-100">
+      <div class="card bg-white shadow-sm">
         <div class="card-header d-flex flex-wrap justify-content-between align-items-center">
           <h2 id="records-title" class="h4 mb-0">{{ texts['ui.saved_records'] }} <span id="records-count" class="badge badge-primary">0</span></h2>
           <div class="d-flex align-items-center mt-2 mt-sm-0">
-            <span id="pending-count" class="text-muted mr-2"></span>
+            <span id="pending-count" class="text-muted mr-2 d-none d-sm-inline"></span>
             <button id="sync" type="button" class="btn btn-default btn-sm mr-2">{{ texts['ui.sync'] }}</button>
             <button id="clear-filters" type="button" class="btn btn-default btn-sm mr-2">{{ texts['ui.clear_filters'] }}</button>
             <button id="new-entry" type="button" class="btn btn-primary btn-sm">{{ texts['ui.new_entry'] }}</button>
