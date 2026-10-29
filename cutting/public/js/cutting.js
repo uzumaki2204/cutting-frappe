@@ -174,8 +174,6 @@
     $("register-device").disabled = inFlight || deviceBusy;
     $("check-device").disabled = inFlight || deviceBusy;
     $("sync").disabled = inFlight || !cache.approved || !count;
-    $("device-status").textContent = cache.approved ? t("ui.approved") : t("ui.pending");
-    $("device-status").className = `indicator-pill ${cache.approved ? "green" : "orange"}`;
     $("connection-status").textContent = connected ? t("ui.online") : t("ui.offline");
     $("connection-status").className = `indicator-pill ${connected ? "green" : "gray"}`;
     const dateKey = new Date(nowUtc() + (cache.server_utc_offset_minutes || 0) * 60000).toISOString().slice(0, 10);
@@ -269,5 +267,8 @@
   window.addEventListener("storage", (event) => { if (event.key === stateKey()) render(); });
   setInterval(() => { if (navigator.onLine) syncQueue(); }, 15000);
   try { loadCache(); if (deviceId && navigator.onLine) deviceAction(false); }
-  catch (error) { $("entry-fields").disabled = true; notice(t("ui.storage_error"), true); }
+  catch (error) {
+    $("entry-fields").disabled = true;
+    notice(error.message === t("ui.storage_error") ? error.message : t("error.unexpected"), true);
+  }
 })();
