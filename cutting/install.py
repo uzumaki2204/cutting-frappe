@@ -40,4 +40,12 @@ def after_migrate():
                     "parenttype": "DocType", "parentfield": "permissions",
                     "role": role, "permlevel": 0, "select": 1,
                 }).insert(ignore_permissions=True)
+    frappe.permissions.setup_custom_perms("Data Import")
+    if not frappe.db.exists("Custom DocPerm", {"parent": "Data Import", "role": "Cutting Manager", "permlevel": 0}):
+        frappe.get_doc({
+            "doctype": "Custom DocPerm", "parent": "Data Import",
+            "parenttype": "DocType", "parentfield": "permissions",
+            "role": "Cutting Manager", "permlevel": 0, "if_owner": 1,
+            "read": 1, "create": 1, "write": 1,
+        }).insert(ignore_permissions=True)
     frappe.clear_cache()

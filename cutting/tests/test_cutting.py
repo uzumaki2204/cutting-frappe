@@ -111,3 +111,19 @@ class TestCutting(IntegrationTestCase):
         local_day = expected.date().isoformat()
         rows = reporting.report_detail(local_day, local_day, {"device": self.device.name})
         self.assertEqual(len(rows), 1)
+
+    def test_manager_can_create_own_native_import_job(self):
+        email = "cutting-" + uuid.uuid4().hex[:10] + "@example.invalid"
+        values = {"doctype": "User", "email": email, "first_name": "Cutting Test",
+                  "send_welcome_email": 0, "user_type": "System User",
+                  "roles": [{"role": "Cutting Manager"}]}
+        if frappe.get_meta("User").has_field("company"):
+            values["company"] = self.company.name
+        frappe.get_doc(values).insert()
+        frappe.set_user(email)
+        job = frappe.get_doc({"doctype": "Data Import", "reference_doctype": "Cutting Record", "import_type": "Insert New Records"}).insert()
+        self.assertEqual(job.owner, email)
+        self.assertTrue(frappe.has_permission("Data Import", "write", doc=job))
+        with self.assertRaises(frappe.PermissionError):
+            frappe.get_doc({"doctype": "Data Import", "reference_doctype": "Product", "import_type": "Insert New Records"}).insert()
+        frappe.set_user("Administrator")
