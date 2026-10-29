@@ -15,6 +15,7 @@
   let editing = null;
   let inFlight = false;
   let deviceBusy = false;
+  let storageReady = true;
   let connected = navigator.onLine;
   const stateKey = () => `cutting.queue.${deviceId}`;
   const cacheKey = () => `cutting.catalog.${deviceId}`;
@@ -29,10 +30,12 @@
   }
 
   function readState() {
-    const value = localStorage.getItem(stateKey());
-    const state = value ? JSON.parse(value) : core.empty();
-    if (![state.records, state.updates, state.deletes, state.saved].every(Array.isArray)) throw new Error(t("ui.storage_error"));
-    return state;
+    try {
+      const value = localStorage.getItem(stateKey());
+      const state = value ? JSON.parse(value) : core.empty();
+      if (![state.records, state.updates, state.deletes, state.saved].every(Array.isArray)) throw new Error();
+      return state;
+    } catch (_) { storageReady = false; throw new Error(t("ui.storage_error")); }
   }
 
   function persist(state) {
@@ -91,6 +94,7 @@
     if (!value) throw new Error(t("ui.device_required"));
     if (value !== deviceId) {
       deviceId = value;
+      storageReady = true;
       localStorage.setItem("cutting.device", deviceId);
       editing = null;
       loadCache();
@@ -150,7 +154,9 @@
   }
 
   function render() {
-    const state = readState();
+    let state;
+    try { state = readState(); }
+    catch (error) { $("entry-fields").disabled = true; $("sync").disabled = true; notice(error.message, true); return; }
     const count = state.records.length + state.updates.length + state.deletes.length;
     $("pending-count").textContent = t("ui.pending_count", { count });
     $("entry-fields").disabled = deviceBusy || !cache.approved || !cache.catalog;
@@ -176,7 +182,7 @@
       const occurred = String(row.occurred_at).replace(" ", "T");
       const date = new Date(occurred + (/Z$|[+-]\d\d:\d\d$/.test(occurred) ? "" : "Z"));
       const siteDate = new Date(date.getTime() + (cache.server_utc_offset_minutes || 0) * 60000);
-      const values = [siteDate.toLocaleString(root.dataset.lang === "en" ? "en-US" : "vi-VN", { timeZone: "UTC" }), label("products", row.product), label("markets", row.market), label("colors", row.color), row.product_code_identifier, row.quantity, row.synced ? t("ui.synced") : t("ui.pending")];
+      const values = [siteDate.toLocaleString(root.dataset.lang === "en" ? "en-US" : "vi-VN", { timeZone: "UTC" }), label("products", row.product), label("markets", row.market), label("colors", row.color), row.product_code_identifier, row.quantity, row.synced ? t("ui.synced") : t("ui.pending_sync")];
       for (const value of values) { const td = document.createElement("td"); td.textContent = value; tr.append(td); }
       const actions = document.createElement("td");
       for (const [key, handler] of [["ui.edit", () => editRecord(row)], ["ui.delete", () => deleteRecord(row)]]) {
@@ -208,7 +214,7 @@
   }
 
   async function syncQueue() {
-    if (inFlight || !cache.approved || !deviceId) return;
+    if (inFlight || !storageReady || !cache.approved || !deviceId) return;
     const state = readState();
     if (!state.records.length && !state.updates.length && !state.deletes.length) return;
     const sent = { records: state.records.slice(0, 200), updates: state.updates.slice(0, 200), deletes: state.deletes.slice(0, 100) };
