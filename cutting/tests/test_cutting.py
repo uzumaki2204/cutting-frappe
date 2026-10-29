@@ -49,6 +49,17 @@ class TestCutting(IntegrationTestCase):
         with self.assertRaises(frappe.PermissionError):
             api.sync_records(self.device.name, [self.item()])
 
+    def test_tablet_rejects_inactive_product_and_variant(self):
+        self.product.is_active = 0; self.product.save()
+        with self.assertRaises(frappe.ValidationError):
+            api.sync_records(self.device.name, [self.item()])
+        self.product.is_active = 1; self.product.save()
+        variant = frappe.get_doc("Product Variant", {"product": self.product.name})
+        variant.is_active = 0; variant.save()
+        with self.assertRaises(frappe.ValidationError):
+            api.sync_records(self.device.name, [self.item()])
+        self.assertFalse(frappe.db.exists("Cutting Record", {"device": self.device.name}))
+
     def test_update_delete_restore_and_append_only_history(self):
         api.sync_records(self.device.name, [self.item()])
         api.sync_records(self.device.name, updates=[self.item(quantity=20)])

@@ -30,7 +30,7 @@
         <div class="col-md-6 form-group"><label class="control-label" for="market">{{ texts['ui.market'] }}</label><select id="market" class="form-control" required></select></div>
         <div class="col-md-6 form-group"><label class="control-label" for="color">{{ texts['ui.color'] }}</label><select id="color" class="form-control" required></select></div>
         <div class="col-md-6 form-group"><label class="control-label" for="identifier">{{ texts['ui.identifier'] }}</label><input id="identifier" class="form-control" maxlength="100" autocomplete="off" required></div>
-        <div class="col-md-6 form-group"><label class="control-label" for="quantity">{{ texts['ui.quantity'] }}</label><input id="quantity" class="form-control" type="number" min="1" step="1" inputmode="numeric" required></div>
+        <div class="col-md-6 form-group"><label class="control-label" for="quantity">{{ texts['ui.quantity'] }}</label><input id="quantity" class="form-control" type="number" min="1" max="2147483647" step="1" inputmode="numeric" required></div>
       </div>
       <div class="mb-4">
         <button type="submit" class="btn btn-primary">{{ texts['ui.save'] }}</button>
