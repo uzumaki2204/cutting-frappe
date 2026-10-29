@@ -2,7 +2,7 @@
 
 import hashlib
 import json
-from datetime import datetime, time, timedelta, timezone
+from datetime import datetime, timezone
 
 import frappe
 
@@ -238,13 +238,10 @@ def _sync_records(id, records, updates, deletes):
 @frappe.whitelist(allow_guest=True, methods=["GET"])
 def get_device_records(id: str | None = None):
     device = _device(id)
-    now = datetime.now(_zone())
-    start = datetime.combine(now.date(), time.min)
-    end = datetime.combine(now.date() + timedelta(days=1), time.min)
     fields = ["name", "product", "color", "market", "product_code_identifier", "quantity", "local_event_id", "occurred_at", "creation"]
     rows = frappe.get_all(
         "Cutting Record", fields=fields,
-        filters=[["device", "=", device.name], ["is_deleted", "=", 0], ["occurred_at", ">=", start.strftime("%Y-%m-%d %H:%M:%S")], ["occurred_at", "<", end.strftime("%Y-%m-%d %H:%M:%S")]],
+        filters=[["device", "=", device.name], ["is_deleted", "=", 0]],
         order_by="occurred_at desc", limit_page_length=200,
     )
     for row in rows:

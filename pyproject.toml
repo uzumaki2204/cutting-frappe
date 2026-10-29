@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cutting"
-version = "0.1.1"
+version = "0.1.2"
 description = "Cutting records for Frappe 16"
 readme = "README.md"
 requires-python = ">=3.14"
@@ -18,4 +18,4 @@ where = ["."]
 include = ["cutting*"]
 
 [tool.setuptools.package-data]
-cutting = ["*.txt", "*.json", "public/js/*.js", "public/*.json", "www/*.html", "translations/*.csv", "cutting/doctype/*/*.json", "cutting/doctype/*/*.js", "cutting/page/*/*.json", "cutting/page/*/*.js"]
+cutting = ["*.txt", "*.json", "public/js/*.js", "public/images/*.png", "public/*.json", "www/*.html", "translations/*.csv", "cutting/doctype/*/*.json", "cutting/doctype/*/*.js", "cutting/page/*/*.json", "cutting/page/*/*.js"]

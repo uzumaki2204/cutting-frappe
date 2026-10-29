@@ -25,7 +25,9 @@ App không cần Server Scripts. Schema là DocType chuẩn được quản lý 
 
 ## Tablet
 
-Mở `/cutting` (tiếng Việt) hoặc `/cutting?lang=en`. Form **Nhập Cutting** nằm ở cột trái, bản ghi nằm bên phải. Dùng nút **Cài đặt thiết bị** trên đầu trang để đăng ký hoặc kiểm tra UUID, rồi duyệt thiết bị trong **Factory Device**, bật hoạt động và gán công ty. Tablet dùng ID của thiết bị theo cùng cơ chế QC/UQQC; ID không phải bí mật. Không đưa API key/secret Administrator vào tablet.
+Mở `/cutting` (tiếng Việt) hoặc `/cutting?lang=en`. Form **Nhập Cutting** nằm ở card trái; chỉ gồm mã hàng, thị trường, màu, ID mã hàng và số lượng, không yêu cầu nhập mùa sản xuất. Card **Bản ghi đã lưu** ở bên phải có bộ lọc mã hàng, màu, thị trường, ngày và ID mã hàng, cùng phân trang 8 dòng mặc định. Danh sách đọc tối đa 200 bản ghi gần nhất của thiết bị hiện tại. Header có logo, nút toàn màn hình, trạng thái/kiểm tra kết nối và cài đặt thiết bị. Mọi thành phần dùng class/style mặc định của Frappe Desk; app không có CSS tùy biến.
+
+Dùng nút cài đặt thiết bị trên đầu trang để đăng ký hoặc kiểm tra UUID, rồi duyệt thiết bị trong **Factory Device**, bật hoạt động và gán công ty. Tablet dùng ID của thiết bị theo cùng cơ chế QC/UQQC; ID không phải bí mật. Không đưa API key/secret Administrator vào tablet.
 
 Chỉ các biến thể đang hoạt động và có đủ sản phẩm, màu, size, thị trường mới xuất hiện. Bản ghi Cutting chỉ lưu sản phẩm, màu, thị trường, mã kế hoạch, số lượng và thời điểm phát sinh. Mã sự kiện được tạo riêng cho từng lần nhập; gửi lại cùng mã của cùng thiết bị không tạo bản ghi thứ hai.
 

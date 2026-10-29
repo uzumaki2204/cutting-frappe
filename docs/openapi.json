@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Cutting API",
-    "version": "0.1.1",
+    "version": "0.1.2",
     "description": "Standalone Cutting for Frappe 16. Tablet calls use approved Factory Device IDs. Desk calls use Frappe User roles. No .NET API compatibility routes or machine ingest."
   },
   "servers": [
@@ -280,7 +280,7 @@
     "/api/method/cutting.api.get_device_records": {
       "get": {
         "operationId": "cutting_api_get_device_records",
-        "summary": "Read the latest 200 active records for the device today",
+        "summary": "Read the latest 200 active records for the device",
         "tags": [
           "Tablet"
         ],

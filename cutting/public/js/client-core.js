@@ -57,6 +57,8 @@
     for (const row of rows) {
       if (!pending.has(key(row)) && !hidden.has(key(row))) state.saved = upsert(state.saved, { ...row, synced: true });
     }
+    const synced = state.saved.filter((row) => row.synced).sort((a, b) => String(b.occurred_at).localeCompare(String(a.occurred_at))).slice(0, 200);
+    state.saved = [...state.saved.filter((row) => !row.synced), ...synced];
     return state;
   }
 

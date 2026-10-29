@@ -14,3 +14,9 @@ Ngày kiểm tra: 2026-10-29. Môi trường: Frappe 16.53.0, Python 3.14, Facto
 Khi site có trang Builder hoặc Web Page cũ tại `/cutting`, cần tắt xuất bản trang cũ trước để URL đi vào app. Installer phát hiện xung đột; không ghi đè nội dung trang cũ. Không chuyển dữ liệu SQL hoặc hàng đợi của phần mềm cũ.
 
 - Form nhập ở cột trái, bảng bản ghi ở cột phải; đăng ký/kiểm tra thiết bị nằm trong hộp thoại mở từ nút cài đặt trên đầu trang.
+
+## Cập nhật giao diện 0.1.2
+
+- Form tablet giống luồng cũ: mã hàng, thị trường, màu, ID mã hàng và số lượng; không có trường mùa sản xuất.
+- Danh sách hiển thị tối đa 200 bản ghi gần nhất của thiết bị, không giới hạn trong ngày hiện tại. Bộ lọc gồm mã hàng, màu, thị trường, khoảng ngày và ID mã hàng; phân trang bắt đầu ở 8 dòng.
+- Thêm logo Kim Thanh Group và icon toàn màn hình, kết nối, cài đặt thiết bị. Card nhập và card bản ghi phân biệt bằng utility class mặc định của Desk; không thêm CSS riêng.

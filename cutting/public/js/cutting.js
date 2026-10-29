@@ -5,8 +5,12 @@
   const texts = JSON.parse(document.getElementById("cutting-texts").textContent);
   const t = (key, values = {}) => Object.entries(values).reduce((s, [k, v]) => s.replaceAll(`{${k}}`, String(v)), texts[key] || texts["error.unexpected"]);
   const $ = (id) => document.getElementById(id);
-  const ids = ["season", "product", "market", "color"];
+  const ids = ["product", "market", "color"];
   const controls = Object.fromEntries(ids.map((id) => [id, $(id)]));
+  const filters = {
+    product: $("filter-product"), color: $("filter-color"), market: $("filter-market"),
+    from: $("filter-from"), to: $("filter-to"), identifier: $("filter-identifier"),
+  };
   const core = window.CuttingQueue;
   let deviceId = "";
   try { deviceId = localStorage.getItem("cutting.device") || ""; }
@@ -17,6 +21,8 @@
   let deviceBusy = false;
   let storageReady = true;
   let connected = navigator.onLine;
+  let pageSize = 8;
+  let currentPage = 1;
   const stateKey = () => `cutting.queue.${deviceId}`;
   const cacheKey = () => `cutting.catalog.${deviceId}`;
   const nowUtc = () => Date.now() + (cache.clock_delta_ms || 0);
@@ -28,6 +34,37 @@
     if (deviceSettings.open) deviceSettings.close();
     $("open-device-settings").setAttribute("aria-expanded", "false");
     $("open-device-settings").focus();
+  }
+
+  function updateFullscreenButton() {
+    const active = document.fullscreenElement === root;
+    $("fullscreen-enter-icon").hidden = active;
+    $("fullscreen-exit-icon").hidden = !active;
+    const text = t(active ? "ui.exit_fullscreen" : "ui.fullscreen");
+    $("fullscreen-button").setAttribute("aria-label", text);
+    $("fullscreen-button").title = text;
+  }
+
+  async function toggleFullscreen() {
+    try {
+      if (document.fullscreenElement) await document.exitFullscreen();
+      else await root.requestFullscreen();
+    } catch (_) { notice(t("ui.fullscreen_failed"), true); }
+  }
+
+  async function checkConnection() {
+    try {
+      if (!navigator.onLine) throw new Error(t("ui.offline"));
+      await request("cutting.api.device_epoch");
+      connected = true;
+      render();
+      notice(t("ui.online"));
+      if (deviceId) await deviceAction(false);
+    } catch (error) {
+      connected = false;
+      render();
+      notice(error.message || t("ui.sync_failed"), true);
+    }
   }
 
   function notice(text, error = false) {
@@ -53,6 +90,7 @@
   function loadCache() {
     cache = JSON.parse(localStorage.getItem(cacheKey()) || "{}");
     renderSelectors();
+    renderFilterOptions();
     render();
   }
 
@@ -124,6 +162,7 @@
         cache = { ...data, approved: true, clock_delta_ms: Date.parse(data.server_now_utc) - Date.now() };
         localStorage.setItem(cacheKey(), JSON.stringify(cache));
         renderSelectors();
+        renderFilterOptions();
         await syncQueue();
         const rows = await request("cutting.api.get_device_records", { id: deviceId });
         persist(core.mergeServer(readState(), rows));
@@ -139,8 +178,8 @@
     } finally { deviceBusy = false; render(); }
   }
 
-  function options(select, rows, selected = select.value) {
-    select.replaceChildren(new Option(t("ui.select"), ""));
+  function options(select, rows, selected = select.value, placeholder = t("ui.select")) {
+    select.replaceChildren(new Option(placeholder, ""));
     for (const row of rows) select.add(new Option([row.code, row.name].filter(Boolean).join(" — "), row.id));
     if (rows.some((row) => row.id === selected)) select.value = selected;
   }
@@ -148,12 +187,43 @@
   function renderSelectors() {
     const catalog = cache.catalog || {};
     const variants = catalog.product_variants || [];
-    options(controls.season, catalog.seasons || []);
-    const products = (catalog.products || []).filter((row) => (!controls.season.value || row.season_id === controls.season.value) && variants.some((v) => v.product === row.id));
+    const products = (catalog.products || []).filter((row) => variants.some((v) => v.product === row.id));
     options(controls.product, products);
     const choices = variants.filter((row) => row.product === controls.product.value);
     options(controls.market, (catalog.markets || []).filter((row) => choices.some((v) => v.market === row.id)));
     options(controls.color, (catalog.colors || []).filter((row) => choices.some((v) => v.color === row.id && (!controls.market.value || v.market === controls.market.value))));
+  }
+
+  function renderFilterOptions() {
+    const catalog = cache.catalog || {};
+    options(filters.product, catalog.products || [], filters.product.value, t("ui.all_products"));
+    options(filters.color, catalog.colors || [], filters.color.value, t("ui.all_colors"));
+    options(filters.market, catalog.markets || [], filters.market.value, t("ui.all_markets"));
+  }
+
+  function siteDateKey(value) {
+    const iso = String(value || "").replace(" ", "T");
+    const date = new Date(iso + (/Z$|[+-]\d\d:\d\d$/.test(iso) ? "" : "Z"));
+    if (!Number.isFinite(date.getTime())) return "";
+    return new Date(date.getTime() + (cache.server_utc_offset_minutes || 0) * 60000).toISOString().slice(0, 10);
+  }
+
+  function filteredRows(rows) {
+    const product = filters.product.value;
+    const color = filters.color.value;
+    const market = filters.market.value;
+    const from = filters.from.value;
+    const to = filters.to.value;
+    const identifier = filters.identifier.value.trim().toLocaleLowerCase();
+    return rows.filter((row) => {
+      const day = siteDateKey(row.occurred_at);
+      return (!product || row.product === product)
+        && (!color || row.color === color)
+        && (!market || row.market === market)
+        && (!from || day >= from)
+        && (!to || day <= to)
+        && (!identifier || String(row.product_code_identifier || "").toLocaleLowerCase().includes(identifier));
+    });
   }
 
   function label(type, id) {
@@ -174,18 +244,26 @@
     $("register-device").disabled = inFlight || deviceBusy;
     $("check-device").disabled = inFlight || deviceBusy;
     $("sync").disabled = inFlight || !cache.approved || !count;
-    $("connection-status").textContent = connected ? t("ui.online") : t("ui.offline");
-    $("connection-status").className = `indicator-pill ${connected ? "green" : "gray"}`;
-    const dateKey = new Date(nowUtc() + (cache.server_utc_offset_minutes || 0) * 60000).toISOString().slice(0, 10);
-    const rows = state.saved;
-    const today = rows.filter((row) => {
-      const iso = String(row.occurred_at).replace(" ", "T");
-      const value = new Date(iso + (/Z$|[+-]\d\d:\d\d$/.test(iso) ? "" : "Z"));
-      if (!Number.isFinite(value.getTime())) return false;
-      return new Date(value.getTime() + (cache.server_utc_offset_minutes || 0) * 60000).toISOString().slice(0, 10) === dateKey;
-    }).sort((a, b) => String(b.occurred_at).localeCompare(String(a.occurred_at)));
+    const connectionText = connected ? t("ui.online") : t("ui.offline");
+    $("connection-status").textContent = connectionText;
+    $("network-button").className = `btn btn-default btn-sm mr-1 ${connected ? "text-success" : "text-muted"}`;
+    $("network-button").setAttribute("aria-label", connectionText);
+    $("network-button").title = connectionText;
+    const rows = state.saved.slice().sort((a, b) => String(b.occurred_at).localeCompare(String(a.occurred_at)));
+    const matched = filteredRows(rows);
+    const pageCount = Math.max(1, Math.ceil(matched.length / pageSize));
+    currentPage = Math.min(currentPage, pageCount);
+    const pageRows = matched.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+    $("records-count").textContent = String(matched.length);
+    $("records-count").setAttribute("aria-label", t("ui.saved_count", { count: matched.length }));
+    $("page-size-label").textContent = t("ui.page_size", { count: pageSize });
+    $("page-label").textContent = t("ui.page", { current: currentPage, total: pageCount });
+    $("page-size-down").disabled = pageSize <= 5;
+    $("page-size-up").disabled = pageSize >= 50;
+    $("previous-page").disabled = currentPage <= 1;
+    $("next-page").disabled = currentPage >= pageCount;
     $("records-body").replaceChildren();
-    for (const row of today) {
+    for (const row of pageRows) {
       const tr = document.createElement("tr");
       const occurred = String(row.occurred_at).replace(" ", "T");
       const date = new Date(occurred + (/Z$|[+-]\d\d:\d\d$/.test(occurred) ? "" : "Z"));
@@ -198,12 +276,12 @@
       }
       tr.append(actions); $("records-body").append(tr);
     }
-    $("empty-records").hidden = today.length > 0;
+    $("empty-records").textContent = rows.length ? t("ui.no_filtered_records") : t("ui.no_records");
+    $("empty-records").hidden = pageRows.length > 0;
   }
 
   function editRecord(row) {
     editing = row;
-    controls.season.value = "";
     renderSelectors(); controls.product.value = row.product;
     renderSelectors(); controls.market.value = row.market;
     renderSelectors(); controls.color.value = row.color;
@@ -251,6 +329,28 @@
     } catch (error) { notice(error.message, true); }
   });
   for (const id of ids) controls[id].addEventListener("change", renderSelectors);
+  for (const control of Object.values(filters)) {
+    control.addEventListener(control === filters.identifier ? "input" : "change", () => { currentPage = 1; render(); });
+  }
+  $("clear-filters").addEventListener("click", () => {
+    for (const control of Object.values(filters)) control.value = "";
+    currentPage = 1;
+    render();
+  });
+  $("new-entry").addEventListener("click", () => {
+    $("entry-form").reset();
+    editing = null;
+    $("cancel-edit").hidden = true;
+    renderSelectors();
+    if (!$("entry-fields").disabled) controls.product.focus();
+  });
+  $("page-size-down").addEventListener("click", () => { pageSize = Math.max(5, pageSize - 5); currentPage = 1; render(); });
+  $("page-size-up").addEventListener("click", () => { pageSize = Math.min(50, pageSize + 5); currentPage = 1; render(); });
+  $("previous-page").addEventListener("click", () => { currentPage = Math.max(1, currentPage - 1); render(); });
+  $("next-page").addEventListener("click", () => { currentPage += 1; render(); });
+  $("fullscreen-button").addEventListener("click", toggleFullscreen);
+  document.addEventListener("fullscreenchange", updateFullscreenButton);
+  $("network-button").addEventListener("click", checkConnection);
   $("open-device-settings").addEventListener("click", () => {
     deviceSettings.showModal();
     $("open-device-settings").setAttribute("aria-expanded", "true");
