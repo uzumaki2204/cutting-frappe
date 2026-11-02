@@ -64,7 +64,7 @@
     </div>
   </dialog>
 
-  <dialog id="device-cache-confirm-dialog" class="cutting-cache-confirm-dialog" aria-labelledby="device-cache-confirm-title" aria-describedby="device-cache-confirm-message" aria-modal="true">
+  <dialog id="device-cache-confirm-dialog" class="cutting-confirm-dialog" aria-labelledby="device-cache-confirm-title" aria-describedby="device-cache-confirm-message" aria-modal="true">
     <div class="modal-dialog m-0">
       <div class="modal-content border-0 shadow-sm">
         <div class="modal-header">
@@ -77,6 +77,24 @@
         <div class="modal-footer">
           <button id="cancel-device-cache" type="button" class="btn btn-default">{{ texts['ui.cancel_confirmation'] }}</button>
           <button id="confirm-device-cache" type="button" class="btn btn-primary">{{ texts['ui.clear_device_cache'] }}</button>
+        </div>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog id="delete-record-confirm-dialog" class="cutting-confirm-dialog" aria-labelledby="delete-record-confirm-title" aria-describedby="delete-record-confirm-message" aria-modal="true">
+    <div class="modal-dialog m-0">
+      <div class="modal-content border-0 shadow-sm">
+        <div class="modal-header">
+          <h2 id="delete-record-confirm-title" class="modal-title h5 mb-0">{{ texts['ui.confirm'] }}</h2>
+          <button id="close-delete-record-confirm" type="button" class="close" aria-label="{{ texts['ui.close'] }}"><span aria-hidden="true">&times;</span></button>
+        </div>
+        <div class="modal-body">
+          <p id="delete-record-confirm-message" class="mb-0">{{ texts['ui.confirm_delete'] }}</p>
+        </div>
+        <div class="modal-footer">
+          <button id="cancel-delete-record" type="button" class="btn btn-default" autofocus>{{ texts['ui.cancel_confirmation'] }}</button>
+          <button id="confirm-delete-record" type="button" class="btn btn-danger">{{ texts['ui.delete'] }}</button>
         </div>
       </div>
     </div>

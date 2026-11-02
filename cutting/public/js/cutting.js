@@ -29,6 +29,7 @@
   catch (_) { frappe.show_alert({ message: t("ui.storage_error"), indicator: "red" }, 7); return; }
   let cache = {};
   let editing = null;
+  let pendingDeleteRecord = null;
   let inFlight = false;
   let deviceBusy = false;
   let storageReady = true;
@@ -44,6 +45,7 @@
   document.documentElement.lang = root.dataset.lang;
   const deviceSettingsDialog = $("device-settings-dialog");
   const deviceCacheConfirmDialog = $("device-cache-confirm-dialog");
+  const deleteRecordConfirmDialog = $("delete-record-confirm-dialog");
   $("device-settings-body").append($("device-settings-template").content.cloneNode(true));
   deviceSettingsDialog.addEventListener("close", () => {
     stopQrScanner();
@@ -54,6 +56,7 @@
     if (deviceSettingsDialog.open) $("clear-device-cache").focus();
     else $("open-device-settings").focus();
   });
+  deleteRecordConfirmDialog.addEventListener("close", () => { pendingDeleteRecord = null; });
 
   function closeDeviceSettings() {
     if (deviceSettingsDialog.open) deviceSettingsDialog.close();
@@ -554,7 +557,20 @@
   function cancelEdit() { editing = null; $("cancel-edit").hidden = true; $("quantity").value = ""; }
 
   function deleteRecord(row) {
-    if (!confirm(t("ui.confirm_delete"))) return;
+    if (inFlight || deleteRecordConfirmDialog.open) return;
+    pendingDeleteRecord = row;
+    deleteRecordConfirmDialog.showModal();
+    $("cancel-delete-record").focus();
+  }
+
+  function closeDeleteRecordConfirmation() {
+    if (deleteRecordConfirmDialog.open) deleteRecordConfirmDialog.close();
+  }
+
+  function confirmDeleteRecord() {
+    const row = pendingDeleteRecord;
+    if (!row || !deleteRecordConfirmDialog.open) return;
+    deleteRecordConfirmDialog.close();
     try { const state = readState(); core.remove(state, row.local_event_id); persist(state); render(); syncQueue(); }
     catch (error) { notice(error.message, true); }
   }
@@ -645,6 +661,12 @@
   $("confirm-device-cache").addEventListener("click", confirmClearDeviceCache);
   deviceCacheConfirmDialog.addEventListener("click", (event) => {
     if (event.target === deviceCacheConfirmDialog) closeDeviceCacheConfirmation();
+  });
+  $("close-delete-record-confirm").addEventListener("click", closeDeleteRecordConfirmation);
+  $("cancel-delete-record").addEventListener("click", closeDeleteRecordConfirmation);
+  $("confirm-delete-record").addEventListener("click", confirmDeleteRecord);
+  deleteRecordConfirmDialog.addEventListener("click", (event) => {
+    if (event.target === deleteRecordConfirmDialog) closeDeleteRecordConfirmation();
   });
   root.addEventListener("focusin", keepFocusedEntryInputVisible);
   root.addEventListener("focusout", () => requestAnimationFrame(keepFocusedEntryInputVisible));
