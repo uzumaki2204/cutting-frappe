@@ -56,7 +56,7 @@
     <aside class="col-lg-3 col-xl-2 mb-4" aria-labelledby="entry-title">
       <section class="card bg-white shadow-sm">
         <div class="card-body p-3">
-          <h2 id="entry-title" class="h4 mb-3">{{ texts['ui.entry_title'] }}</h2>
+          <h2 id="entry-title" class="sr-only">{{ texts['ui.entry_title'] }}</h2>
           <form id="entry-form" novalidate>
             <fieldset id="entry-fields" disabled>
               <div class="form-group mb-3">
@@ -92,7 +92,7 @@
                 <input id="quantity" class="form-control" type="number" min="1" max="2147483647" step="1" inputmode="numeric" required>
               </div>
               <div class="d-flex flex-column">
-                <button type="submit" class="btn btn-primary w-100">{{ texts['ui.save'] }}</button>
+                <button type="submit" class="btn btn-primary w-100 cutting-save-button">{{ texts['ui.save'] }}</button>
                 <button id="cancel-edit" type="button" class="btn btn-default mt-2 align-self-center" hidden>{{ texts['ui.cancel'] }}</button>
               </div>
             </fieldset>
@@ -134,11 +134,17 @@
             </div>
             <div class="col-md-4 form-group mb-2">
               <label class="sr-only" for="filter-from">{{ texts['ui.from'] }}</label>
-              <input id="filter-from" type="date" class="form-control">
+              <div class="cutting-date-filter">
+                <input id="filter-from" type="date" class="form-control">
+                <span class="cutting-date-placeholder" aria-hidden="true"><span>{{ texts['ui.date_placeholder'] }}</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2v4m10-4v4M4 9h16M5 4h14a1 1 0 0 1 1 1v14H4V5a1 1 0 0 1 1-1Z"/></svg></span>
+              </div>
             </div>
             <div class="col-md-4 form-group mb-2">
               <label class="sr-only" for="filter-to">{{ texts['ui.to'] }}</label>
-              <input id="filter-to" type="date" class="form-control">
+              <div class="cutting-date-filter">
+                <input id="filter-to" type="date" class="form-control">
+                <span class="cutting-date-placeholder" aria-hidden="true"><span>{{ texts['ui.date_placeholder'] }}</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2v4m10-4v4M4 9h16M5 4h14a1 1 0 0 1 1 1v14H4V5a1 1 0 0 1 1-1Z"/></svg></span>
+              </div>
             </div>
             <div class="col-md-4 form-group mb-2">
               <label class="sr-only" for="filter-identifier">{{ texts['ui.filter_identifier'] }}</label>
@@ -147,7 +153,10 @@
           </div>
         </div>
         <div class="table-responsive">
-          <table class="table table-bordered bg-white mb-0">
+          <table class="table table-bordered bg-white mb-0 cutting-records-table">
+            <colgroup>
+              <col><col><col><col><col><col><col><col>
+            </colgroup>
             <thead><tr>
               <th scope="col">{{ texts['ui.date'] }}</th>
               <th scope="col">{{ texts['ui.product_code'] }}</th>

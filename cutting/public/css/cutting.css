@@ -58,6 +58,90 @@
   flex: 0 0 auto;
 }
 
+#cutting-app .cutting-save-button {
+  min-height: 2.85rem;
+}
+
+#cutting-app .cutting-date-filter {
+  position: relative;
+}
+
+#cutting-app .cutting-date-filter input[type="date"] {
+  position: relative;
+  z-index: 1;
+}
+
+#cutting-app .cutting-date-filter:not(.has-value) input[type="date"] {
+  color: transparent;
+}
+
+#cutting-app .cutting-date-filter:not(.has-value) input[type="date"]:focus {
+  color: inherit;
+}
+
+#cutting-app .cutting-date-placeholder {
+  align-items: center;
+  color: #6c757d;
+  display: flex;
+  inset: 0;
+  justify-content: space-between;
+  padding: 0 .75rem;
+  pointer-events: none;
+  position: absolute;
+  z-index: 2;
+}
+
+#cutting-app .cutting-date-placeholder svg {
+  fill: none;
+  flex: 0 0 auto;
+  height: 1rem;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.7;
+  width: 1rem;
+}
+
+#cutting-app .cutting-date-filter.has-value .cutting-date-placeholder,
+#cutting-app .cutting-date-filter:focus-within .cutting-date-placeholder {
+  display: none;
+}
+
+#cutting-app .cutting-date-filter input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0;
+  width: 1.5rem;
+}
+
+#cutting-app .cutting-record-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: nowrap;
+  gap: .35rem;
+  white-space: nowrap;
+}
+
+#cutting-app .cutting-record-actions .btn {
+  align-items: center;
+  display: inline-flex;
+  flex: 0 0 2.35rem;
+  height: 2.35rem;
+  justify-content: center;
+  margin: 0;
+  min-width: 2.35rem;
+  padding: .25rem;
+}
+
+#cutting-app .cutting-record-actions svg {
+  fill: none;
+  height: 1.1rem;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+  width: 1.1rem;
+}
+
 #cutting-app:fullscreen {
   background-color: #fff;
   color-scheme: light;
@@ -180,6 +264,39 @@
 @media (min-width: 1200px) {
   .cutting-picker-grid {
     grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1399.98px) {
+  #cutting-app .cutting-records-table {
+    font-size: .875rem;
+    table-layout: fixed;
+  }
+
+  #cutting-app .cutting-records-table th,
+  #cutting-app .cutting-records-table td {
+    font-size: inherit;
+    padding: .5rem .4rem;
+    vertical-align: middle;
+  }
+
+  #cutting-app .cutting-records-table th {
+    white-space: nowrap;
+  }
+
+  #cutting-app .cutting-records-table col:nth-child(1) { width: 12%; }
+  #cutting-app .cutting-records-table col:nth-child(2) { width: 13%; }
+  #cutting-app .cutting-records-table col:nth-child(3) { width: 12%; }
+  #cutting-app .cutting-records-table col:nth-child(4) { width: 8%; }
+  #cutting-app .cutting-records-table col:nth-child(5) { width: 13%; }
+  #cutting-app .cutting-records-table col:nth-child(6) { width: 8%; }
+  #cutting-app .cutting-records-table col:nth-child(7) { width: 18%; }
+  #cutting-app .cutting-records-table col:nth-child(8) { width: 16%; }
+}
+
+@media (min-width: 768px) and (max-width: 991.98px) {
+  #cutting-app .cutting-records-table {
+    min-width: 860px;
   }
 }
 

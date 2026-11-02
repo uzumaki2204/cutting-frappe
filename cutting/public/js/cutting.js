@@ -459,6 +459,7 @@
     let state;
     try { state = readState(); }
     catch (error) { $("entry-fields").disabled = true; $("sync").disabled = true; notice(error.message, true); return; }
+    for (const input of [filters.from, filters.to]) input.closest(".cutting-date-filter").classList.toggle("has-value", Boolean(input.value));
     const count = state.records.length + state.updates.length + state.deletes.length;
     $("pending-count").textContent = t("ui.pending_count", { count });
     $("entry-fields").disabled = deviceBusy || !cache.approved || !cache.catalog;
@@ -499,10 +500,14 @@
       const values = [siteDate.toLocaleString(root.dataset.lang === "en" ? "en-US" : "vi-VN", { timeZone: "UTC" }), label("products", row.product), label("markets", row.market), label("colors", row.color), row.product_code_identifier, row.quantity, row.synced ? t("ui.synced") : t("ui.pending_sync")];
       for (const value of values) { const td = document.createElement("td"); td.textContent = value; tr.append(td); }
       const actions = document.createElement("td");
+      const actionGroup = document.createElement("div"); actionGroup.className = "cutting-record-actions";
       for (const [key, handler] of [["ui.edit", () => editRecord(row)], ["ui.delete", () => deleteRecord(row)]]) {
-        const button = document.createElement("button"); button.type = "button"; button.className = "btn btn-sm mr-1 " + (key === "ui.delete" ? "cutting-record-delete" : "cutting-record-edit"); button.textContent = t(key); button.disabled = inFlight; button.addEventListener("click", handler); actions.append(button);
+        const button = document.createElement("button"); button.type = "button"; button.className = "btn btn-sm " + (key === "ui.delete" ? "cutting-record-delete" : "cutting-record-edit"); button.setAttribute("aria-label", t(key)); button.title = t(key); button.disabled = inFlight;
+        const icon = document.createElementNS("http://www.w3.org/2000/svg", "svg"); icon.setAttribute("viewBox", "0 0 24 24"); icon.setAttribute("aria-hidden", "true");
+        const path = document.createElementNS("http://www.w3.org/2000/svg", "path"); path.setAttribute("d", key === "ui.delete" ? "M4 7h16M10 11v6m4-6v6M6 7l1 14h10l1-14M9 7V4h6v3" : "M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z"); icon.append(path); button.append(icon);
+        button.addEventListener("click", handler); actionGroup.append(button);
       }
-      tr.append(actions); $("records-body").append(tr);
+      actions.append(actionGroup); tr.append(actions); $("records-body").append(tr);
     }
     $("empty-records").textContent = rows.length ? t("ui.no_filtered_records") : t("ui.no_records");
     $("empty-records").hidden = pageRows.length > 0;
