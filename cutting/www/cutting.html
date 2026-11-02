@@ -52,6 +52,18 @@
     </div>
   </template>
 
+  <dialog id="device-settings-dialog" class="cutting-device-dialog" aria-labelledby="device-settings-title" aria-modal="true">
+    <div class="modal-dialog modal-lg m-0">
+      <div class="modal-content border-0 shadow-sm">
+        <div class="modal-header">
+          <h2 id="device-settings-title" class="modal-title h5 mb-0">{{ texts['ui.settings'] }}</h2>
+          <button id="device-settings-close" type="button" class="close" aria-label="{{ texts['ui.close'] }}"><span aria-hidden="true">&times;</span></button>
+        </div>
+        <div id="device-settings-body" class="modal-body"></div>
+      </div>
+    </div>
+  </dialog>
+
   <div class="row cutting-main-layout">
     <aside class="col-lg-3 col-xl-2 mb-4" aria-labelledby="entry-title">
       <section class="card bg-white shadow-sm">

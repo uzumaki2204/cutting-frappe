@@ -4,8 +4,7 @@
   if (!root) return;
   const texts = JSON.parse(document.getElementById("cutting-texts").textContent);
   const t = (key, values = {}) => Object.entries(values).reduce((s, [k, v]) => s.replaceAll(`{${k}}`, String(v)), texts[key] || texts["error.unexpected"]);
-  let deviceSettings = null;
-  const $ = (id) => document.getElementById(id) || deviceSettings?.$wrapper?.[0]?.querySelector(`#${id}`);
+  const $ = (id) => document.getElementById(id);
   const ids = ["product", "market", "color"];
   const UNIQLO_CUSTOMER = "UNIQLO";
   const controls = Object.fromEntries(ids.map((id) => [id, $(id)]));
@@ -43,25 +42,21 @@
   const cacheKey = () => `cutting.catalog.${deviceId}`;
   const nowUtc = () => Date.now() + (cache.clock_delta_ms || 0);
   document.documentElement.lang = root.dataset.lang;
-  deviceSettings = new frappe.ui.Dialog({
-    title: t("ui.settings"), size: "large",
-    fields: [{ fieldname: "device_panel", fieldtype: "HTML" }],
-  });
-  deviceSettings.fields_dict.device_panel.$wrapper[0].append($("device-settings-template").content.cloneNode(true));
-  deviceSettings.$wrapper.find(".modal-header .close").attr("aria-label", t("ui.close"));
-  deviceSettings.$wrapper.on("hidden.bs.modal", () => {
+  const deviceSettingsDialog = $("device-settings-dialog");
+  $("device-settings-body").append($("device-settings-template").content.cloneNode(true));
+  deviceSettingsDialog.addEventListener("close", () => {
     stopQrScanner();
     $("open-device-settings").setAttribute("aria-expanded", "false");
     $("open-device-settings").focus();
   });
 
   function closeDeviceSettings() {
-    deviceSettings.hide();
+    if (deviceSettingsDialog.open) deviceSettingsDialog.close();
   }
 
   function openDeviceSettings(focusId = true) {
     $("device-id").value = deviceId;
-    deviceSettings.show();
+    if (!deviceSettingsDialog.open) deviceSettingsDialog.showModal();
     $("open-device-settings").setAttribute("aria-expanded", "true");
     if (focusId) $("device-id").focus();
   }
@@ -599,6 +594,10 @@
   root.addEventListener("click", autoFullscreenOnInteraction, true);
   root.addEventListener("keydown", autoFullscreenOnInteraction, true);
   document.addEventListener("fullscreenchange", updateFullscreenButton);
+  $("device-settings-close").addEventListener("click", closeDeviceSettings);
+  deviceSettingsDialog.addEventListener("click", (event) => {
+    if (event.target === deviceSettingsDialog) closeDeviceSettings();
+  });
   root.addEventListener("focusin", keepFocusedEntryInputVisible);
   root.addEventListener("focusout", () => requestAnimationFrame(keepFocusedEntryInputVisible));
   window.visualViewport?.addEventListener("resize", keepFocusedEntryInputVisible);

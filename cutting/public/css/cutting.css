@@ -166,6 +166,35 @@
   background-color: #fff;
 }
 
+.cutting-device-dialog {
+  border: 0;
+  border-radius: .5rem;
+  max-height: 92dvh;
+  max-width: min(96vw, 800px);
+  overflow: hidden;
+  padding: 0;
+  width: 100%;
+}
+
+.cutting-device-dialog::backdrop {
+  background: rgb(0 0 0 / 55%);
+}
+
+.cutting-device-dialog .modal-dialog,
+.cutting-device-dialog .modal-content {
+  max-width: 100%;
+  width: 100%;
+}
+
+.cutting-device-dialog .modal-content {
+  max-height: 92dvh;
+}
+
+.cutting-device-dialog .modal-body {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
 .cutting-picker-dialog {
   border: 0;
   border-radius: .5rem;
