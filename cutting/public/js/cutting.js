@@ -135,7 +135,6 @@
         $("device-id").value = "";
         $("entry-form").reset();
         renderSelectors();
-        renderFilterOptions();
         render();
         closeDeviceSettings();
         notice(t("ui.device_cache_cleared"));
@@ -226,7 +225,6 @@
   function loadCache() {
     cache = JSON.parse(localStorage.getItem(cacheKey()) || "{}");
     renderSelectors();
-    renderFilterOptions();
     render();
   }
 
@@ -289,7 +287,6 @@
       }
       cache = nextCache;
       renderSelectors();
-      renderFilterOptions();
       render();
       await syncQueue();
       const rows = await request("cutting.api.get_device_records", { id: deviceId });
@@ -407,11 +404,24 @@
   pickerDialog.addEventListener("click", (event) => { if (event.target === pickerDialog) pickerDialog.close(); });
   pickerDialog.addEventListener("close", restorePickerFocus);
 
-  function renderFilterOptions() {
+  function renderFilterOptions(savedRows) {
     const catalog = cache.catalog || {};
-    options(filters.product, catalog.products || [], filters.product.value, t("ui.all_products"));
-    options(filters.color, catalog.colors || [], filters.color.value, t("ui.all_colors"));
-    options(filters.market, catalog.markets || [], filters.market.value, t("ui.all_markets"));
+    const values = {
+      product: new Set(savedRows.map((row) => row.product).filter(Boolean)),
+      color: new Set(savedRows.map((row) => row.color).filter(Boolean)),
+      market: new Set(savedRows.map((row) => row.market).filter(Boolean)),
+    };
+    const rowsFor = (type, ids) => {
+      const known = (catalog[type] || []).filter((row) => ids.has(row.id));
+      const knownIds = new Set(known.map((row) => row.id));
+      const missing = [...ids].filter((id) => !knownIds.has(id))
+        .sort((left, right) => String(left).localeCompare(String(right), undefined, { numeric: true, sensitivity: "base" }))
+        .map((id) => ({ id, code: id }));
+      return [...known, ...missing];
+    };
+    options(filters.product, rowsFor("products", values.product), filters.product.value, t("ui.all_products"));
+    options(filters.color, rowsFor("colors", values.color), filters.color.value, t("ui.all_colors"));
+    options(filters.market, rowsFor("markets", values.market), filters.market.value, t("ui.all_markets"));
   }
 
   function siteDateKey(value) {
@@ -466,6 +476,7 @@
     $("network-button").setAttribute("aria-label", connectionText);
     $("network-button").title = connectionText;
     const rows = state.saved.slice().sort((a, b) => String(b.occurred_at).localeCompare(String(a.occurred_at)));
+    renderFilterOptions(rows);
     const matched = filteredRows(rows);
     const pageCount = Math.max(1, Math.ceil(matched.length / pageSize));
     currentPage = Math.min(currentPage, pageCount);
