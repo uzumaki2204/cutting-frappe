@@ -171,7 +171,12 @@
 
   function keepFocusedEntryInputVisible() {
     const input = document.activeElement;
-    if (!(input instanceof HTMLElement) || !["identifier", "quantity"].includes(input.id)) return;
+    const isEntryInput = input instanceof HTMLElement && ["identifier", "quantity"].includes(input.id);
+    root.classList.toggle("cutting-entry-input-focused", document.fullscreenElement === root && isEntryInput);
+    if (!isEntryInput) {
+      cancelAnimationFrame(focusedInputScrollFrame);
+      return;
+    }
     cancelAnimationFrame(focusedInputScrollFrame);
     focusedInputScrollFrame = requestAnimationFrame(() => {
       const viewport = window.visualViewport;
@@ -565,6 +570,7 @@
   root.addEventListener("keydown", autoFullscreenOnInteraction, true);
   document.addEventListener("fullscreenchange", updateFullscreenButton);
   root.addEventListener("focusin", keepFocusedEntryInputVisible);
+  root.addEventListener("focusout", () => requestAnimationFrame(keepFocusedEntryInputVisible));
   window.visualViewport?.addEventListener("resize", keepFocusedEntryInputVisible);
   window.visualViewport?.addEventListener("scroll", keepFocusedEntryInputVisible);
   $("network-button").addEventListener("click", checkConnection);

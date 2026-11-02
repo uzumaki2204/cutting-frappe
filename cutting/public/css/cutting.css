@@ -20,9 +20,17 @@
 #cutting-app:fullscreen {
   background-color: #fff;
   color-scheme: light;
+  height: 100vh;
   min-height: 100vh;
   overflow-x: hidden;
   overflow-y: auto;
+}
+
+#cutting-app:fullscreen.cutting-entry-input-focused::after {
+  content: "";
+  display: block;
+  height: max(35vh, 220px);
+  pointer-events: none;
 }
 
 #cutting-app:fullscreen::backdrop {
