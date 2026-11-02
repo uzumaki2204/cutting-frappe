@@ -59,6 +59,13 @@
     deviceSettings.hide();
   }
 
+  function openDeviceSettings(focusId = true) {
+    $("device-id").value = deviceId;
+    deviceSettings.show();
+    $("open-device-settings").setAttribute("aria-expanded", "true");
+    if (focusId) $("device-id").focus();
+  }
+
   function stopQrScanner() {
     qrSession += 1;
     if (qrFrame) cancelAnimationFrame(qrFrame);
@@ -597,12 +604,7 @@
   window.visualViewport?.addEventListener("resize", keepFocusedEntryInputVisible);
   window.visualViewport?.addEventListener("scroll", keepFocusedEntryInputVisible);
   $("network-button").addEventListener("click", checkConnection);
-  $("open-device-settings").addEventListener("click", () => {
-    $("device-id").value = deviceId;
-    deviceSettings.show();
-    $("open-device-settings").setAttribute("aria-expanded", "true");
-    $("device-id").focus();
-  });
+  $("open-device-settings").addEventListener("click", () => openDeviceSettings());
   $("scan-qr").addEventListener("click", scanQr);
   $("activate-device").addEventListener("click", activateDevice);
   $("device-id").addEventListener("keydown", (event) => { if (event.key === "Enter") activateDevice(); });
@@ -613,7 +615,11 @@
   window.addEventListener("offline", () => { connected = false; render(); });
   window.addEventListener("storage", (event) => { if (event.key === stateKey()) render(); });
   setInterval(() => { if (navigator.onLine) syncQueue(); }, 15000);
-  try { loadCache(); if (deviceId && navigator.onLine) deviceAction(false); }
+  try {
+    loadCache();
+    if (deviceId && navigator.onLine) deviceAction(false);
+    else if (!deviceId) openDeviceSettings(false);
+  }
   catch (error) {
     $("entry-fields").disabled = true;
     notice(error.message === t("ui.storage_error") ? error.message : t("error.unexpected"), true);

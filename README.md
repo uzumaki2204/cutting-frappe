@@ -63,4 +63,4 @@ bench --site <test-site> run-tests --app cutting
 
 Chạy integration test trên site riêng đã cài `factory_management` và `cutting`. Test tạo master/thiết bị tạm trong transaction của test framework. Không chạy bộ test này trên site đang vận hành.
 
-Source chuẩn tại `integrations/frappe/cutting` trong repo FactoryManagement. Khi phát hành, đồng bộ đúng nội dung thư mục app vào repo riêng, tăng phiên bản trong `pyproject.toml`, `cutting/__init__.py`, manifest và OpenAPI, commit rồi push nhánh `version-16`/tag tương ứng. Bản 0.1.21 yêu cầu Factory Management tối thiểu 0.1.40. Cài mới tạo schema trống; người dùng tự import dữ liệu nghiệp vụ sau.
+Source chuẩn tại `integrations/frappe/cutting` trong repo FactoryManagement. Khi phát hành, đồng bộ đúng nội dung thư mục app vào repo riêng, tăng phiên bản trong `pyproject.toml`, `cutting/__init__.py`, manifest và OpenAPI, commit rồi push nhánh `version-16`/tag tương ứng. Bản 0.1.22 yêu cầu Factory Management tối thiểu 0.1.40. Cài mới tạo schema trống; người dùng tự import dữ liệu nghiệp vụ sau.
