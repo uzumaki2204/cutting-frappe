@@ -5,6 +5,14 @@
   const upsert = (items, item) => [...items.filter((row) => key(row) !== key(item)), copy(item)];
   const empty = () => ({ records: [], updates: [], deletes: [], saved: [] });
 
+  function siteDateKey(value, offsetMinutes = 0) {
+    const iso = String(value || "").replace(" ", "T");
+    const date = new Date(iso + (/Z$|[+-]\d\d:\d\d$/.test(iso) ? "" : "Z"));
+    if (!Number.isFinite(date.getTime())) return "";
+    const offset = Number(offsetMinutes) || 0;
+    return new Date(date.getTime() + offset * 60000).toISOString().slice(0, 10);
+  }
+
   function add(state, item) {
     state.records = upsert(state.records, item);
     state.saved = upsert(state.saved, { ...item, synced: false });
@@ -25,6 +33,13 @@
     state.updates = state.updates.filter((row) => key(row) !== id);
     if (!pending) state.deletes = upsert(state.deletes, { local_event_id: id });
     state.saved = state.saved.filter((row) => key(row) !== id);
+  }
+
+  function discardUpdates(state, ids) {
+    const discarded = new Set(ids);
+    state.updates = state.updates.filter((row) => !discarded.has(key(row)));
+    state.saved = state.saved.filter((row) => !discarded.has(key(row)));
+    return state;
   }
 
   function acknowledge(state, sent, result) {
@@ -62,7 +77,7 @@
     return state;
   }
 
-  const api = { empty, add, edit, remove, acknowledge, mergeServer, copy };
+  const api = { empty, add, edit, remove, acknowledge, mergeServer, discardUpdates, siteDateKey, copy };
   root.CuttingQueue = api;
   if (typeof module !== "undefined" && module.exports) module.exports = api;
 })(typeof window === "undefined" ? globalThis : window);

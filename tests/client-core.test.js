@@ -45,3 +45,21 @@ test("server refresh does not overwrite unsynced edits or resurrect pending dele
   queue.edit(state, event("a", 7)); queue.remove(state, "b"); queue.mergeServer(state, [event("a"), event("b")]);
   assert.equal(state.saved[0].quantity, 7); assert.equal(state.saved.some((row) => row.local_event_id === "b"), false);
 });
+
+test("site date keys use the Frappe timezone offset at UTC day boundaries", () => {
+  assert.equal(queue.siteDateKey("2026-11-01T18:00:00Z", 420), "2026-11-02");
+  assert.equal(queue.siteDateKey("2026-11-02T17:00:00Z", 420), "2026-11-03");
+});
+
+test("discarding an expired offline edit restores the refreshed server record", () => {
+  const state = queue.empty();
+  const original = event("a", 10);
+  state.saved = [{ ...original, synced: true }];
+  queue.edit(state, event("a", 20));
+
+  queue.discardUpdates(state, ["a"]);
+  queue.mergeServer(state, [original]);
+
+  assert.equal(state.updates.length, 0);
+  assert.deepEqual(state.saved, [{ ...original, synced: true }]);
+});

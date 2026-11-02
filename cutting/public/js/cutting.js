@@ -446,10 +446,11 @@
   }
 
   function siteDateKey(value) {
-    const iso = String(value || "").replace(" ", "T");
-    const date = new Date(iso + (/Z$|[+-]\d\d:\d\d$/.test(iso) ? "" : "Z"));
-    if (!Number.isFinite(date.getTime())) return "";
-    return new Date(date.getTime() + (cache.server_utc_offset_minutes || 0) * 60000).toISOString().slice(0, 10);
+    return core.siteDateKey(value, cache.server_utc_offset_minutes || 0);
+  }
+
+  function siteTodayKey() {
+    return siteDateKey(new Date(nowUtc()).toISOString());
   }
 
   function filteredRows(rows) {
@@ -512,6 +513,7 @@
     $("previous-page").disabled = currentPage <= 1;
     $("next-page").disabled = currentPage >= pageCount;
     $("records-body").replaceChildren();
+    const todayKey = siteTodayKey();
     for (const row of pageRows) {
       const tr = document.createElement("tr");
       const occurred = String(row.occurred_at).replace(" ", "T");
@@ -521,8 +523,11 @@
       for (const value of values) { const td = document.createElement("td"); td.textContent = value; tr.append(td); }
       const actions = document.createElement("td");
       const actionGroup = document.createElement("div"); actionGroup.className = "cutting-record-actions";
+      const editableToday = siteDateKey(row.occurred_at) === todayKey;
       for (const [key, handler] of [["ui.edit", () => editRecord(row)], ["ui.delete", () => deleteRecord(row)]]) {
-        const button = document.createElement("button"); button.type = "button"; button.className = "btn btn-sm " + (key === "ui.delete" ? "cutting-record-delete" : "cutting-record-edit"); button.setAttribute("aria-label", t(key)); button.title = t(key); button.disabled = inFlight;
+        const editBlocked = key === "ui.edit" && !editableToday;
+        const buttonText = editBlocked ? t("error.edit_today_only") : t(key);
+        const button = document.createElement("button"); button.type = "button"; button.className = "btn btn-sm " + (key === "ui.delete" ? "cutting-record-delete" : "cutting-record-edit"); button.setAttribute("aria-label", buttonText); button.title = buttonText; button.disabled = inFlight || editBlocked;
         const icon = document.createElementNS("http://www.w3.org/2000/svg", "svg"); icon.setAttribute("viewBox", "0 0 24 24"); icon.setAttribute("aria-hidden", "true");
         const path = document.createElementNS("http://www.w3.org/2000/svg", "path"); path.setAttribute("d", key === "ui.delete" ? "M4 7h16M10 11v6m4-6v6M6 7l1 14h10l1-14M9 7V4h6v3" : "M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z"); icon.append(path); button.append(icon);
         button.addEventListener("click", handler); actionGroup.append(button);
@@ -534,6 +539,7 @@
   }
 
   function editRecord(row) {
+    if (siteDateKey(row.occurred_at) !== siteTodayKey()) { notice(t("error.edit_today_only"), true); return; }
     editing = row;
     renderSelectors(); controls.product.value = row.product;
     renderSelectors(); controls.market.value = row.market;
@@ -555,7 +561,27 @@
 
   async function syncQueue() {
     if (inFlight || !storageReady || !cache.approved || !deviceId) return;
-    const state = readState();
+    let state = readState();
+    const expiredUpdates = state.updates.filter((row) => siteDateKey(row.occurred_at) !== siteTodayKey());
+    if (expiredUpdates.length) {
+      inFlight = true; render();
+      try {
+        const rows = await request("cutting.api.get_device_records", { id: deviceId });
+        state = readState();
+        const expiredIds = state.updates
+          .filter((row) => siteDateKey(row.occurred_at) !== siteTodayKey())
+          .map((row) => row.local_event_id);
+        if (expiredIds.length) {
+          core.discardUpdates(state, expiredIds);
+          notice(t("ui.expired_edits_discarded", { count: expiredIds.length }), true);
+        }
+        persist(core.mergeServer(state, rows));
+      } catch (error) {
+        notice(error.message || t("ui.sync_failed"), true);
+        return;
+      } finally { inFlight = false; render(); }
+    }
+    state = readState();
     if (!state.records.length && !state.updates.length && !state.deletes.length) return;
     const sent = { records: state.records.slice(0, 200), updates: state.updates.slice(0, 200), deletes: state.deletes.slice(0, 100) };
     inFlight = true; render();
@@ -571,6 +597,10 @@
     event.preventDefault();
     try {
       if (!cache.approved) throw new Error(t("ui.pending"));
+      if (editing && siteDateKey(editing.occurred_at) !== siteTodayKey()) {
+        cancelEdit();
+        throw new Error(t("error.edit_today_only"));
+      }
       const product = controls.product.value, market = controls.market.value, color = controls.color.value;
       if (!(cache.catalog.product_variants || []).some((row) => row.product === product && row.market === market && row.color === color)) throw new Error(t("ui.invalid_selection"));
       const quantity = Number($("quantity").value);

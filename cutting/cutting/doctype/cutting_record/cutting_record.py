@@ -105,6 +105,15 @@ class CuttingRecord(Document):
                 _fail("error.state_action")
             if previous.is_deleted and not state_changed:
                 _fail("error.restore_first")
+            content_changed = any((previous.get(field) or None) != (self.get(field) or None) for field in EDITABLE_FIELDS)
+            if content_changed:
+                previous_occurred = previous.occurred_at
+                if not isinstance(previous_occurred, datetime):
+                    previous_occurred = datetime.fromisoformat(str(previous_occurred).replace("Z", "+00:00"))
+                if previous_occurred.tzinfo:
+                    previous_occurred = previous_occurred.astimezone(site_zone()).replace(tzinfo=None)
+                if previous_occurred.date() != site_now().date():
+                    _fail("error.edit_today_only")
         if (self.source == "Cutting" or self.flags.get("cutting_validate_active")) and not self.flags.get("cutting_state_action"):
             if not self.device:
                 _fail("error.device_missing")

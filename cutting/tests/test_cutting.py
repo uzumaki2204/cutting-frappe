@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from unittest.mock import patch
 
 import frappe
@@ -7,7 +7,7 @@ from frappe.tests import IntegrationTestCase
 
 from cutting import api, devices, reporting
 from cutting.cutting.doctype.cutting_record.cutting_record import event_uid
-from cutting.timeutils import site_zone, site_to_utc
+from cutting.timeutils import site_now, site_to_utc, site_zone
 
 
 class TestCutting(IntegrationTestCase):
@@ -40,8 +40,13 @@ class TestCutting(IntegrationTestCase):
                 values[field] = device_id
         self.device = frappe.get_doc(values).insert(set_name=device_id)
 
-    def item(self, local_id="event-1", quantity=10):
-        return {"local_event_id": local_id, "product": self.product.name, "color": self.color.name, "market": self.market.name, "product_code_identifier": "PLAN", "quantity": quantity, "occurred_at": "2026-10-29T01:00:00Z"}
+    def item(self, local_id="event-1", quantity=10, occurred_at="2026-10-29T01:00:00Z"):
+        return {"local_event_id": local_id, "product": self.product.name, "color": self.color.name, "market": self.market.name, "product_code_identifier": "PLAN", "quantity": quantity, "occurred_at": occurred_at}
+
+    def item_for_site_day(self, local_id="event-1", quantity=10, days_from_today=0):
+        local = site_now() + timedelta(days=days_from_today)
+        local = local.replace(hour=12, minute=0, second=0, microsecond=0)
+        return self.item(local_id, quantity, site_to_utc(local))
 
     def record(self, local_id="event-1"):
         return frappe.get_doc("Cutting Record", {"event_uid": event_uid(self.device.name, local_id)})
@@ -118,12 +123,42 @@ class TestCutting(IntegrationTestCase):
             )
 
     def test_replay_does_not_duplicate_or_overwrite_admin_edit(self):
-        api.sync_records(self.device.name, [self.item()])
+        api.sync_records(self.device.name, [self.item_for_site_day()])
         record = self.record(); record.quantity = 12; record.save()
-        response = api.sync_records(self.device.name, [self.item()])
+        response = api.sync_records(self.device.name, [self.item_for_site_day()])
         self.assertEqual(response["accepted_count"], 1)
         self.assertEqual(self.record().quantity, 12)
         self.assertEqual(frappe.db.count("Cutting Record", {"event_uid": event_uid(self.device.name, "event-1")}), 1)
+
+    def test_today_record_can_be_updated_through_tablet_sync(self):
+        item = self.item_for_site_day()
+        api.sync_records(self.device.name, [item])
+
+        response = api.sync_records(self.device.name, updates=[{**item, "quantity": 20}])
+
+        self.assertEqual(response["accepted_update_local_event_ids"], [item["local_event_id"]])
+        self.assertEqual(self.record(item["local_event_id"]).quantity, 20)
+
+    def test_sync_rejects_updates_outside_the_site_day(self):
+        for days_from_today in (-1, 1):
+            item = self.item_for_site_day(f"outside-day-{days_from_today}", days_from_today=days_from_today)
+            api.sync_records(self.device.name, [item])
+
+            with self.assertRaises(frappe.ValidationError):
+                api.sync_records(self.device.name, updates=[{**item, "quantity": 20}])
+
+            self.assertEqual(self.record(item["local_event_id"]).quantity, item["quantity"])
+
+    def test_direct_save_rejects_editing_a_historical_record(self):
+        item = self.item_for_site_day("desk-old-record", days_from_today=-1)
+        api.sync_records(self.device.name, [item])
+        record = self.record(item["local_event_id"])
+        record.quantity = 20
+
+        with self.assertRaises(frappe.ValidationError):
+            record.save()
+
+        self.assertEqual(self.record(item["local_event_id"]).quantity, item["quantity"])
 
     def test_invalid_batch_rolls_back_all_records_and_history(self):
         with self.assertRaises(frappe.ValidationError):
@@ -147,9 +182,18 @@ class TestCutting(IntegrationTestCase):
         self.assertFalse(frappe.db.exists("Cutting Record", {"device": self.device.name}))
 
     def test_update_delete_restore_and_append_only_history(self):
-        api.sync_records(self.device.name, [self.item()])
-        api.sync_records(self.device.name, updates=[self.item(quantity=20)])
-        record = self.record(); api.soft_delete(record.name); api.restore(record.name)
+        item = self.item_for_site_day()
+        api.sync_records(self.device.name, [item])
+        api.sync_records(self.device.name, updates=[{**item, "quantity": 20}])
+        record = self.record()
+        api.soft_delete(record.name)
+        self.assertTrue(frappe.db.exists("Cutting Record", record.name))
+        self.assertEqual(frappe.db.get_value("Cutting Record", record.name, "is_deleted"), 1)
+        api.restore(record.name)
+        with self.assertRaises(frappe.ValidationError):
+            record.delete()
+        self.assertTrue(frappe.db.exists("Cutting Record", record.name))
+        self.assertEqual(frappe.db.get_value("Cutting Record", record.name, "is_deleted"), 0)
         actions = [row.action for row in frappe.get_all("Cutting History", filters={"cutting_record": record.name}, fields=["action"], order_by="creation")]
         self.assertEqual(actions, ["Create", "Update", "Delete", "Restore"])
         history = frappe.get_doc("Cutting History", {"cutting_record": record.name})

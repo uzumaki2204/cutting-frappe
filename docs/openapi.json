@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Cutting API",
-    "version": "0.1.24",
+    "version": "0.1.25",
     "description": "Standalone Cutting for Frappe 16. Tablet calls use approved Factory Device IDs. Desk calls use Frappe User roles. No .NET API compatibility routes or machine ingest."
   },
   "servers": [
@@ -451,7 +451,7 @@
                 "required": [
                   "id"
                 ],
-                "description": "At most 500 operations. Creates are idempotent by device/local_event_id, including after later edits. Updates and deletes are limited to the owning device. A validation failure rolls back the whole batch.",
+                "description": "At most 500 operations. Creates are idempotent by device/local_event_id, including after later edits. Updates and deletes are limited to the owning device. Updates are allowed only when the record's occurred_at date is today in the Frappe site timezone; expired edits return a localized validation error. A validation failure rolls back the whole batch.",
                 "properties": {
                   "id": {
                     "type": "string",

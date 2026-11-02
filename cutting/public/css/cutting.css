@@ -58,7 +58,8 @@
   flex: 0 0 auto;
 }
 
-#cutting-app .cutting-save-button {
+#cutting-app .cutting-save-button,
+#cutting-app .cutting-cancel-edit-button {
   min-height: 2.85rem;
 }
 
