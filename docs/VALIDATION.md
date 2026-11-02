@@ -1,6 +1,10 @@
 # Kiểm chứng bản 0.1.1
 
-Ghi chú: phần dưới là bằng chứng kiểm thử lịch sử cho Cutting 0.1.5 với Factory Management 0.1.29. Cutting 0.1.6 yêu cầu Factory Management từ 0.1.40 và cần được xác nhận lại trên site thử sau khi phát hành.
+Ghi chú: phần dưới là bằng chứng kiểm thử lịch sử cho Cutting 0.1.5 với Factory Management 0.1.29. Cutting 0.1.7 yêu cầu Factory Management từ 0.1.40.
+
+## Hotfix 0.1.7
+
+Frappe 16.53 cần khai báo cả section `[pre_model_sync]` và `[post_model_sync]` trong `patches.txt`. Lần migrate Pilot đầu tiên với 0.1.6 đã chạy xong patch chuyển màu và đồng bộ DocType, sau đó dừng ở bước đọc `post_model_sync` vì section này chưa có. Bản 0.1.7 bổ sung section rỗng để migrate chạy tiếp; patch chuyển màu đã được ghi nhận hoàn tất nên lần chạy lại không thực hiện ánh xạ lần nữa.
 
 ## Kiểm tra cục bộ trước phát hành 0.1.6
 
