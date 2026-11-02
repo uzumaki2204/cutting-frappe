@@ -43,11 +43,16 @@
   const nowUtc = () => Date.now() + (cache.clock_delta_ms || 0);
   document.documentElement.lang = root.dataset.lang;
   const deviceSettingsDialog = $("device-settings-dialog");
+  const deviceCacheConfirmDialog = $("device-cache-confirm-dialog");
   $("device-settings-body").append($("device-settings-template").content.cloneNode(true));
   deviceSettingsDialog.addEventListener("close", () => {
     stopQrScanner();
     $("open-device-settings").setAttribute("aria-expanded", "false");
     $("open-device-settings").focus();
+  });
+  deviceCacheConfirmDialog.addEventListener("close", () => {
+    if (deviceSettingsDialog.open) $("clear-device-cache").focus();
+    else $("open-device-settings").focus();
   });
 
   function closeDeviceSettings() {
@@ -127,24 +132,31 @@
 
   function clearDeviceCache() {
     if (deviceBusy || inFlight) return;
-    const confirmation = frappe.confirm(t("ui.confirm_clear_device_cache"), () => {
-      try {
-        window.CuttingDevice.clearStorage(localStorage);
-        stopQrScanner();
-        deviceId = "";
-        cache = {};
-        editing = null;
-        storageReady = true;
-        $("device-id").value = "";
-        $("entry-form").reset();
-        renderSelectors();
-        render();
-        closeDeviceSettings();
-        notice(t("ui.device_cache_cleared"));
-      } catch (_) { notice(t("ui.storage_error"), true); }
-    }, null, t("ui.clear_device_cache"), t("ui.cancel_confirmation"));
-    confirmation.set_title(t("ui.confirm"));
-    confirmation.$wrapper.find(".modal-header .close").attr("aria-label", t("ui.close"));
+    deviceCacheConfirmDialog.showModal();
+    $("cancel-device-cache").focus();
+  }
+
+  function confirmClearDeviceCache() {
+    if (!deviceCacheConfirmDialog.open) return;
+    deviceCacheConfirmDialog.close();
+    try {
+      window.CuttingDevice.clearStorage(localStorage);
+      stopQrScanner();
+      deviceId = "";
+      cache = {};
+      editing = null;
+      storageReady = true;
+      $("device-id").value = "";
+      $("entry-form").reset();
+      renderSelectors();
+      render();
+      closeDeviceSettings();
+      notice(t("ui.device_cache_cleared"));
+    } catch (_) { notice(t("ui.storage_error"), true); }
+  }
+
+  function closeDeviceCacheConfirmation() {
+    if (deviceCacheConfirmDialog.open) deviceCacheConfirmDialog.close();
   }
 
   function updateFullscreenButton() {
@@ -597,6 +609,12 @@
   $("device-settings-close").addEventListener("click", closeDeviceSettings);
   deviceSettingsDialog.addEventListener("click", (event) => {
     if (event.target === deviceSettingsDialog) closeDeviceSettings();
+  });
+  $("close-device-cache-confirm").addEventListener("click", closeDeviceCacheConfirmation);
+  $("cancel-device-cache").addEventListener("click", closeDeviceCacheConfirmation);
+  $("confirm-device-cache").addEventListener("click", confirmClearDeviceCache);
+  deviceCacheConfirmDialog.addEventListener("click", (event) => {
+    if (event.target === deviceCacheConfirmDialog) closeDeviceCacheConfirmation();
   });
   root.addEventListener("focusin", keepFocusedEntryInputVisible);
   root.addEventListener("focusout", () => requestAnimationFrame(keepFocusedEntryInputVisible));
