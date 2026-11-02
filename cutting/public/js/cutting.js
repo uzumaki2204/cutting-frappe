@@ -8,6 +8,15 @@
   const $ = (id) => document.getElementById(id) || deviceSettings?.$wrapper?.[0]?.querySelector(`#${id}`);
   const ids = ["product", "market", "color"];
   const controls = Object.fromEntries(ids.map((id) => [id, $(id)]));
+  const pickerTriggers = Object.fromEntries(ids.map((id) => [id, $(`${id}-picker`)]));
+  const pickerLabels = Object.fromEntries(ids.map((id) => [id, $(`${id}-picker-label`)]));
+  const pickerTitles = { product: "ui.choose_product", market: "ui.choose_market", color: "ui.choose_color" };
+  const pickerDialog = $("entry-picker-dialog");
+  const pickerGrid = $("entry-picker-grid");
+  const pickerEmpty = $("entry-picker-empty");
+  const pickerClose = $("entry-picker-close");
+  let activePicker = "";
+  let pickerRestoreTarget;
   const filters = {
     product: $("filter-product"), color: $("filter-color"), market: $("filter-market"),
     from: $("filter-from"), to: $("filter-to"), identifier: $("filter-identifier"),
@@ -266,8 +275,23 @@
 
   function options(select, rows, selected = select.value, placeholder = t("ui.select")) {
     select.replaceChildren(new Option(placeholder, ""));
-    for (const row of rows) select.add(new Option([row.code, row.name].filter(Boolean).join(" — "), row.id));
+    for (const row of rows) {
+      const option = new Option([row.code, row.name].filter(Boolean).join(" — "), row.id);
+      option.dataset.code = row.code || row.name || row.id;
+      option.dataset.name = row.name || "";
+      select.add(option);
+    }
     if (rows.some((row) => row.id === selected)) select.value = selected;
+  }
+
+  function updatePickerLabels() {
+    for (const id of ids) {
+      const select = controls[id];
+      const option = select.selectedOptions[0];
+      pickerLabels[id].textContent = select.value && option ? option.textContent : t(pickerTitles[id]);
+    }
+    pickerTriggers.market.disabled = !controls.product.value;
+    pickerTriggers.color.disabled = !controls.product.value || !controls.market.value;
   }
 
   function renderSelectors() {
@@ -277,8 +301,73 @@
     options(controls.product, products);
     const choices = variants.filter((row) => row.product === controls.product.value);
     options(controls.market, (catalog.markets || []).filter((row) => choices.some((v) => v.market === row.id)));
-    options(controls.color, (catalog.colors || []).filter((row) => choices.some((v) => v.color === row.id && (!controls.market.value || v.market === controls.market.value))));
+    options(controls.color, (catalog.colors || []).filter((row) => controls.market.value && choices.some((v) => v.color === row.id && v.market === controls.market.value)));
+    controls.market.disabled = !controls.product.value;
+    controls.color.disabled = !controls.product.value || !controls.market.value;
+    updatePickerLabels();
   }
+
+  function renderPickerOptions(kind) {
+    const select = controls[kind];
+    const options = [...select.options].slice(1);
+    pickerGrid.replaceChildren();
+    pickerEmpty.hidden = options.length > 0;
+    for (const option of options) {
+      const card = document.createElement("button");
+      card.type = "button";
+      card.className = `btn cutting-picker-card${option.value === select.value ? " active btn-primary" : " btn-default"}`;
+      card.setAttribute("aria-pressed", String(option.value === select.value));
+      const code = document.createElement("span");
+      code.className = "cutting-picker-card-code";
+      code.textContent = option.dataset.code || option.textContent;
+      card.append(code);
+      if (option.dataset.name && option.dataset.name !== option.dataset.code) {
+        const name = document.createElement("span");
+        name.className = "cutting-picker-card-name";
+        name.textContent = option.dataset.name;
+        card.append(name);
+      }
+      card.addEventListener("click", () => {
+        const chosen = activePicker;
+        select.value = option.value;
+        select.dispatchEvent(new Event("change", { bubbles: true }));
+        pickerTriggers[chosen].setAttribute("aria-expanded", "false");
+        const next = { product: "market", market: "color", color: "" }[chosen];
+        pickerRestoreTarget = next ? null : $("identifier");
+        pickerDialog.close();
+        if (next) openPicker(next);
+        else $("identifier").focus();
+      });
+      pickerGrid.append(card);
+    }
+  }
+
+  function openPicker(kind) {
+    const trigger = pickerTriggers[kind];
+    if (!trigger || trigger.matches(":disabled")) return;
+    activePicker = kind;
+    pickerRestoreTarget = trigger;
+    $("entry-picker-title").textContent = t(pickerTitles[kind]);
+    renderPickerOptions(kind);
+    trigger.setAttribute("aria-expanded", "true");
+    pickerDialog.showModal();
+    (pickerGrid.querySelector('[aria-pressed="true"]') || pickerGrid.querySelector("button") || pickerClose).focus();
+  }
+
+  function restorePickerFocus() {
+    if (pickerDialog.open) return;
+    const target = pickerRestoreTarget;
+    pickerRestoreTarget = undefined;
+    if (!target) return;
+    if (activePicker) pickerTriggers[activePicker].setAttribute("aria-expanded", "false");
+    activePicker = "";
+    target.focus();
+  }
+
+  for (const id of ids) pickerTriggers[id].addEventListener("click", () => openPicker(id));
+  pickerClose.addEventListener("click", () => pickerDialog.close());
+  pickerDialog.addEventListener("click", (event) => { if (event.target === pickerDialog) pickerDialog.close(); });
+  pickerDialog.addEventListener("close", restorePickerFocus);
 
   function renderFilterOptions() {
     const catalog = cache.catalog || {};
@@ -374,6 +463,7 @@
     renderSelectors(); controls.product.value = row.product;
     renderSelectors(); controls.market.value = row.market;
     renderSelectors(); controls.color.value = row.color;
+    renderSelectors();
     $("identifier").value = row.product_code_identifier;
     $("quantity").value = row.quantity;
     $("cancel-edit").hidden = false;
@@ -431,7 +521,7 @@
     editing = null;
     $("cancel-edit").hidden = true;
     renderSelectors();
-    if (!$("entry-fields").disabled) controls.product.focus();
+    if (!$("entry-fields").disabled) pickerTriggers.product.focus();
   });
   $("page-size-down").addEventListener("click", () => { pageSize = Math.max(5, pageSize - 5); currentPage = 1; render(); });
   $("page-size-up").addEventListener("click", () => { pageSize = Math.min(50, pageSize + 5); currentPage = 1; render(); });

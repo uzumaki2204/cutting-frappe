@@ -1,5 +1,5 @@
 {% extends "templates/base.html" %}
-{% block head %}{{ include_style('desk.bundle.css') }}{% endblock %}
+{% block head %}{{ include_style('desk.bundle.css') }}<link rel="stylesheet" href="/assets/cutting/css/cutting.css?v={{ asset_version }}">{% endblock %}
 {% block navbar %}{% endblock %}
 {% block footer %}{% endblock %}
 {% block content %}
@@ -60,16 +60,28 @@
           <form id="entry-form" novalidate>
             <fieldset id="entry-fields" disabled>
               <div class="form-group mb-3">
-                <label class="control-label" for="product">{{ texts['ui.product_code'] }}</label>
-                <select id="product" class="form-control" required><option value="">{{ texts['ui.select'] }}</option></select>
+                <label class="control-label" for="product-picker">{{ texts['ui.product_code'] }}</label>
+                <select id="product" class="d-none" tabindex="-1" aria-hidden="true" required><option value="">{{ texts['ui.select'] }}</option></select>
+                <button id="product-picker" type="button" class="btn btn-default w-100 text-left cutting-picker-trigger" aria-haspopup="dialog" aria-controls="entry-picker-dialog" aria-expanded="false">
+                  <span id="product-picker-label">{{ texts['ui.choose_product'] }}</span>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+                </button>
               </div>
               <div class="form-group mb-3">
-                <label class="control-label" for="market">{{ texts['ui.market'] }}</label>
-                <select id="market" class="form-control" required><option value="">{{ texts['ui.select'] }}</option></select>
+                <label class="control-label" for="market-picker">{{ texts['ui.market'] }}</label>
+                <select id="market" class="d-none" tabindex="-1" aria-hidden="true" required><option value="">{{ texts['ui.select'] }}</option></select>
+                <button id="market-picker" type="button" class="btn btn-default w-100 text-left cutting-picker-trigger" aria-haspopup="dialog" aria-controls="entry-picker-dialog" aria-expanded="false" disabled>
+                  <span id="market-picker-label">{{ texts['ui.choose_market'] }}</span>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+                </button>
               </div>
               <div class="form-group mb-3">
-                <label class="control-label" for="color">{{ texts['ui.color'] }}</label>
-                <select id="color" class="form-control" required><option value="">{{ texts['ui.select'] }}</option></select>
+                <label class="control-label" for="color-picker">{{ texts['ui.color'] }}</label>
+                <select id="color" class="d-none" tabindex="-1" aria-hidden="true" required><option value="">{{ texts['ui.select'] }}</option></select>
+                <button id="color-picker" type="button" class="btn btn-default w-100 text-left cutting-picker-trigger" aria-haspopup="dialog" aria-controls="entry-picker-dialog" aria-expanded="false" disabled>
+                  <span id="color-picker-label">{{ texts['ui.choose_color'] }}</span>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+                </button>
               </div>
               <div class="form-group mb-3">
                 <label class="control-label" for="identifier">{{ texts['ui.product_identifier'] }}</label>
@@ -161,6 +173,20 @@
       </div>
     </section>
   </div>
+  <dialog id="entry-picker-dialog" class="cutting-picker-dialog" aria-labelledby="entry-picker-title" aria-modal="true">
+    <div class="modal-dialog m-0">
+      <div class="modal-content border-0 shadow-sm">
+        <div class="modal-header">
+          <h2 id="entry-picker-title" class="modal-title h5 mb-0"></h2>
+          <button id="entry-picker-close" type="button" class="btn btn-default" aria-label="{{ texts['ui.close'] }}">{{ texts['ui.close'] }}</button>
+        </div>
+        <div class="modal-body">
+          <div id="entry-picker-grid" class="cutting-picker-grid" role="group" aria-labelledby="entry-picker-title"></div>
+          <p id="entry-picker-empty" class="text-muted mb-0" role="status" aria-live="polite" hidden>{{ texts['ui.no_picker_options'] }}</p>
+        </div>
+      </div>
+    </div>
+  </dialog>
 </main>
 <script id="cutting-texts" type="application/json">{{ texts_json | safe }}</script>
 {% endblock %}

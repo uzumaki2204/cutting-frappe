@@ -1,6 +1,6 @@
-# Cutting cho Frappe 16
+﻿# Cutting cho Frappe 16
 
-App độc lập `cutting`, dùng chung master và Factory Device từ `factory_management`. Trang operator công khai là `/cutting`; quản trị dùng List/Form **Cutting Record**, **Cutting History** và Page **Cutting Reports** trong Desk. Giao diện dùng CSS/control mặc định của Desk; app không có CSS tùy biến.
+App độc lập `cutting`, dùng chung master và Factory Device từ `factory_management`. Trang operator công khai là `/cutting`; quản trị dùng List/Form **Cutting Record**, **Cutting History** và Page **Cutting Reports** trong Desk. Giao diện dùng CSS/control mặc định của Desk, kèm stylesheet nhỏ cho popup chọn mã hàng, thị trường và màu.
 
 ## Cài bằng Pilot
 
@@ -25,7 +25,7 @@ App không cần Server Scripts. Schema là DocType chuẩn được quản lý 
 
 ## Tablet
 
-Mở `/cutting` (tiếng Việt) hoặc `/cutting?lang=en`. Form **Nhập Cutting** nằm ở card trái; chỉ gồm mã hàng, thị trường, màu, ID mã hàng và số lượng, không yêu cầu nhập mùa sản xuất. Card **Bản ghi đã lưu** ở bên phải có bộ lọc mã hàng, màu, thị trường, ngày và ID mã hàng, cùng phân trang 8 dòng mặc định. Danh sách đọc tối đa 200 bản ghi gần nhất của thiết bị hiện tại. Header có logo, nút toàn màn hình, trạng thái/kiểm tra kết nối và cài đặt thiết bị. Mọi thành phần dùng class/style mặc định của Frappe Desk; app không có CSS tùy biến.
+Mở `/cutting` (tiếng Việt) hoặc `/cutting?lang=en`. Form **Nhập Cutting** nằm ở card trái; chỉ gồm mã hàng, thị trường, màu, ID mã hàng và số lượng, không yêu cầu nhập mùa sản xuất. Card **Bản ghi đã lưu** ở bên phải có bộ lọc mã hàng, màu, thị trường, ngày và ID mã hàng, cùng phân trang 8 dòng mặc định. Danh sách đọc tối đa 200 bản ghi gần nhất của thiết bị hiện tại. Header có logo, nút toàn màn hình, trạng thái/kiểm tra kết nối và cài đặt thiết bị. Popup chọn mã hàng, thị trường và màu hiển thị thành lưới card; các màn hình quản trị tiếp tục dùng giao diện mặc định của Frappe Desk.
 
 Dùng nút cài đặt thiết bị trên đầu trang để nhập hoặc quét Device ID do Admin cấp, rồi bấm **Kích hoạt**. Thiết bị phải tồn tại trong **Factory Device**, đã duyệt, đang hoạt động và được gán công ty. ID không tồn tại bị từ chối và không tạo bản ghi mới. Tên máy được đọc từ **Factory Device**, không lấy từ QR hoặc tablet. Site HTTP hiện tại chỉ hỗ trợ nhập ID thủ công vì camera trình duyệt cần ngữ cảnh an toàn. Không đưa API key/secret Administrator vào tablet.
 
@@ -63,4 +63,4 @@ bench --site <test-site> run-tests --app cutting
 
 Chạy integration test trên site riêng đã cài `factory_management` và `cutting`. Test tạo master/thiết bị tạm trong transaction của test framework. Không chạy bộ test này trên site đang vận hành.
 
-Source chuẩn tại `integrations/frappe/cutting` trong repo FactoryManagement. Khi phát hành, đồng bộ đúng nội dung thư mục app vào repo riêng, tăng phiên bản trong `pyproject.toml`, `cutting/__init__.py`, manifest và OpenAPI, commit rồi push nhánh `version-16`/tag tương ứng. Bản 0.1.7 yêu cầu Factory Management tối thiểu 0.1.40. Cài mới tạo schema trống; người dùng tự import dữ liệu nghiệp vụ sau.
+Source chuẩn tại `integrations/frappe/cutting` trong repo FactoryManagement. Khi phát hành, đồng bộ đúng nội dung thư mục app vào repo riêng, tăng phiên bản trong `pyproject.toml`, `cutting/__init__.py`, manifest và OpenAPI, commit rồi push nhánh `version-16`/tag tương ứng. Bản 0.1.8 yêu cầu Factory Management tối thiểu 0.1.40. Cài mới tạo schema trống; người dùng tự import dữ liệu nghiệp vụ sau.
