@@ -76,7 +76,7 @@
   z-index: 1;
 }
 
-.cutting-picker-card.active {
+.cutting-picker-dialog .cutting-picker-card-selected {
   background-color: #285a83;
   border-color: #285a83;
   color: #fff;

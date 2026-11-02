@@ -322,7 +322,7 @@
       const card = document.createElement("button");
       card.type = "button";
       const selected = option.value === select.value;
-      card.className = `btn cutting-picker-card${kind !== "product" ? " cutting-picker-card-inline" : ""}${selected ? " active btn-primary" : " btn-default"}`;
+      card.className = `btn btn-default cutting-picker-card${kind !== "product" ? " cutting-picker-card-inline" : ""}${selected ? " cutting-picker-card-selected" : ""}`;
       card.setAttribute("aria-pressed", String(selected));
       if (kind === "product") {
         const code = document.createElement("span");
