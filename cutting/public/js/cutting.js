@@ -301,10 +301,11 @@
     } finally { deviceBusy = false; render(); }
   }
 
-  function options(select, rows, selected = select.value, placeholder = t("ui.select")) {
+  function options(select, rows, selected = select.value, placeholder = t("ui.select"), includeName = true) {
     select.replaceChildren(new Option(placeholder, ""));
     for (const row of rows) {
-      const option = new Option([row.code, row.name].filter(Boolean).join(" — "), row.id);
+      const label = includeName ? [row.code, row.name].filter(Boolean).join(" — ") : row.code || row.id;
+      const option = new Option(label, row.id);
       option.dataset.code = row.code || row.name || row.id;
       option.dataset.name = row.name || "";
       select.add(option);
@@ -419,7 +420,7 @@
         .map((id) => ({ id, code: id }));
       return [...known, ...missing];
     };
-    options(filters.product, rowsFor("products", values.product), filters.product.value, t("ui.all_products"));
+    options(filters.product, rowsFor("products", values.product), filters.product.value, t("ui.all_products"), false);
     options(filters.color, rowsFor("colors", values.color), filters.color.value, t("ui.all_colors"));
     options(filters.market, rowsFor("markets", values.market), filters.market.value, t("ui.all_markets"));
   }
@@ -499,7 +500,7 @@
       for (const value of values) { const td = document.createElement("td"); td.textContent = value; tr.append(td); }
       const actions = document.createElement("td");
       for (const [key, handler] of [["ui.edit", () => editRecord(row)], ["ui.delete", () => deleteRecord(row)]]) {
-        const button = document.createElement("button"); button.type = "button"; button.className = "btn btn-default btn-sm mr-1"; button.textContent = t(key); button.disabled = inFlight; button.addEventListener("click", handler); actions.append(button);
+        const button = document.createElement("button"); button.type = "button"; button.className = "btn btn-sm mr-1 " + (key === "ui.delete" ? "cutting-record-delete" : "cutting-record-edit"); button.textContent = t(key); button.disabled = inFlight; button.addEventListener("click", handler); actions.append(button);
       }
       tr.append(actions); $("records-body").append(tr);
     }

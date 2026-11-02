@@ -7,6 +7,47 @@
   white-space: normal;
 }
 
+#cutting-app .cutting-main-layout {
+  margin-left: -.5rem;
+  margin-right: -.5rem;
+}
+
+#cutting-app .cutting-main-layout > [class*="col-"] {
+  padding-left: .5rem;
+  padding-right: .5rem;
+}
+
+#cutting-app .cutting-record-edit,
+#cutting-app .cutting-record-delete {
+  color: #fff;
+}
+
+#cutting-app .cutting-record-edit {
+  background-color: #285a83;
+  border-color: #285a83;
+}
+
+#cutting-app .cutting-record-edit:hover:enabled {
+  background-color: #1f4b6f;
+  border-color: #1f4b6f;
+}
+
+#cutting-app .cutting-record-delete {
+  background-color: #b42318;
+  border-color: #b42318;
+}
+
+#cutting-app .cutting-record-delete:hover:enabled {
+  background-color: #8f1d14;
+  border-color: #8f1d14;
+}
+
+#cutting-app .cutting-record-edit:focus-visible,
+#cutting-app .cutting-record-delete:focus-visible {
+  outline: 3px solid #91caff;
+  outline-offset: 2px;
+}
+
 .cutting-picker-trigger span {
   min-width: 0;
   overflow-wrap: anywhere;
