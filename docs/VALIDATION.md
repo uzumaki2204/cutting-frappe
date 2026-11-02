@@ -1,5 +1,14 @@
 # Kiểm chứng bản 0.1.1
 
+Ghi chú: phần dưới là bằng chứng kiểm thử lịch sử cho Cutting 0.1.5 với Factory Management 0.1.29. Cutting 0.1.6 yêu cầu Factory Management từ 0.1.40 và cần được xác nhận lại trên site thử sau khi phát hành.
+
+## Kiểm tra cục bộ trước phát hành 0.1.6
+
+Ngày kiểm tra: 2026-11-02. Máy phát triển có Python 3.14.7 và Node.js; không cài Frappe hoặc Bench.
+
+- Đạt: 9 JavaScript tests, Python compileall, parse 11 file JSON, cú pháp các file JavaScript và script Postman, build wheel 0.1.6. Wheel có chứa migration patch và patches.txt.
+- Chưa chạy: Frappe IntegrationTestCase, migrate trên site thử, Postman collection lint và kiểm tra giao diện đã render. Không chạy test trên Pilot đang vận hành.
+
 Ngày kiểm tra: 2026-10-29. Môi trường: Frappe 16.53.0, Python 3.14, Factory Management 0.1.29. Các kiểm tra có dữ liệu dùng site thử riêng, chỉ tạo dữ liệu giả.
 
 - 9 integration test đạt: gửi lại sự kiện, rollback lô lỗi, thiết bị chưa duyệt, master/variant ngừng hoạt động, lịch sử chỉ ghi thêm, xóa/khôi phục, import thiếu thiết bị, quyền Data Import của manager, giới hạn báo cáo và chuyển đổi UTC/giờ site.

@@ -41,7 +41,7 @@ def _active(doctype, name):
 def _valid_variant(product, color, market):
     rows = frappe.get_all(
         "Product Variant",
-        filters={"product": product, "color": color, "market": market, "is_active": 1},
+        filters={"product": product, "product_color": color, "market": market, "is_active": 1},
         fields=["name", "size"],
         limit_page_length=100,
     )
@@ -84,7 +84,7 @@ class CuttingRecord(Document):
         except (TypeError, ValueError):
             _fail("error.input")
         self.occurred_at = occurred.astimezone(site_zone()).replace(tzinfo=None) if occurred.tzinfo else occurred
-        for doctype, value in (("Product", self.product), ("Color", self.color), ("Market", self.market)):
+        for doctype, value in (("Product", self.product), ("Product Color", self.color), ("Market", self.market)):
             if not _exists(doctype, value):
                 _fail("error.master")
         if self.device:
@@ -109,7 +109,7 @@ class CuttingRecord(Document):
             if not self.device:
                 _fail("error.device_missing")
             if not all(_active(doctype, value) for doctype, value in (
-                ("Product", self.product), ("Color", self.color), ("Market", self.market)
+                ("Product", self.product), ("Product Color", self.color), ("Market", self.market)
             )):
                 _fail("error.master")
             if not _valid_variant(self.product, self.color, self.market):

@@ -13,7 +13,7 @@ frappe.pages["cutting-reports"].on_page_load = function (wrapper) {
     add("company", "ui.company", "Link", "Company");
     add("device", "ui.device", "Link", "Factory Device");
     add("product", "ui.product", "Link", "Product");
-    add("color", "ui.color", "Link", "Color");
+    add("color", "ui.color", "Link", "Product Color");
     add("market", "ui.market", "Link", "Market");
     const body = document.createElement("div"); body.className = "p-3"; page.main[0].append(body);
     let exportRows = [], exportColumns = [];

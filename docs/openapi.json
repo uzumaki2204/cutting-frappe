@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Cutting API",
-    "version": "0.1.5",
+    "version": "0.1.6",
     "description": "Standalone Cutting for Frappe 16. Tablet calls use approved Factory Device IDs. Desk calls use Frappe User roles. No .NET API compatibility routes or machine ingest."
   },
   "servers": [
@@ -1309,7 +1309,8 @@
             "type": "string"
           },
           "color": {
-            "type": "string"
+            "type": "string",
+            "description": "Product Color.name. Select this value from the bootstrap catalog colors array."
           },
           "market": {
             "type": "string"
@@ -1395,20 +1396,73 @@
         "properties": {
           "products": {
             "type": "array",
+            "description": "Active Product options. The code and name values come from product_code and product_name.",
             "items": {
-              "type": "object"
+              "type": "object",
+              "required": [
+                "id",
+                "code",
+                "name"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "Product.name"
+                },
+                "code": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                }
+              }
             }
           },
           "colors": {
             "type": "array",
+            "description": "Active Product Color options. Each option uses Product Color.name as id, color_code as code and color_name as name.",
             "items": {
-              "type": "object"
+              "type": "object",
+              "required": [
+                "id",
+                "code",
+                "name"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "code": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                }
+              }
             }
           },
           "markets": {
             "type": "array",
+            "description": "Active Market options. The id is Market.name; code and name come from code and name_en.",
             "items": {
-              "type": "object"
+              "type": "object",
+              "required": [
+                "id",
+                "code",
+                "name"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "Market.name"
+                },
+                "code": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                }
+              }
             }
           },
           "seasons": {
@@ -1419,8 +1473,28 @@
           },
           "product_variants": {
             "type": "array",
+            "description": "Active combinations. The color property contains a Product Color.name while preserving the tablet API field name.",
             "items": {
-              "type": "object"
+              "type": "object",
+              "required": [
+                "product",
+                "color",
+                "market"
+              ],
+              "properties": {
+                "product": {
+                  "type": "string",
+                  "description": "Product.name"
+                },
+                "color": {
+                  "type": "string",
+                  "description": "Product Color.name"
+                },
+                "market": {
+                  "type": "string",
+                  "description": "Market.name"
+                }
+              }
             }
           }
         }

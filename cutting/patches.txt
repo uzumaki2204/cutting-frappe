@@ -1,0 +1,2 @@
+[pre_model_sync]
+cutting.patches.migrate_cutting_colors_to_product_color

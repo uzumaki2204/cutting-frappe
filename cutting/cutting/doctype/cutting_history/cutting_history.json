@@ -37,7 +37,7 @@
       "fieldname": "color",
       "label": "Color",
       "fieldtype": "Link",
-      "options": "Color",
+      "options": "Product Color",
       "reqd": 1
     },
     {

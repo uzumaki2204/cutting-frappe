@@ -4,7 +4,7 @@ App độc lập `cutting`, dùng chung master và Factory Device từ `factory_
 
 ## Cài bằng Pilot
 
-- Frappe `>=16.53.0,<17.0.0`, Python 3.14 và `factory_management >=0.1.29,<0.2.0` đã cài trên site.
+- Frappe `>=16.53.0,<17.0.0`, Python 3.14 và `factory_management >=0.1.40,<0.2.0` đã cài trên site. Phiên bản này cần Product Variant.product_color và Product Color.
 - Trong Pilot, thêm repo public `https://github.com/uzumaki2204/cutting-frappe`, chọn nhánh `version-16`, tên app `cutting`, rồi cài vào site đích.
 - Nếu đã có Web Page hoặc Builder Page xuất bản tại `/cutting`, lưu bản sao và tắt xuất bản trang cũ trước. Installer báo xung đột thay vì sửa nội dung trang có sẵn.
 - Chạy migrate và build assets theo quy trình Pilot, sau đó khởi động lại workload. Sao lưu database và public/private files trước khi cài/nâng cấp.
@@ -37,7 +37,7 @@ Trước khi chuyển từ phần mềm .NET, đồng bộ hết hàng đợi tr
 
 ## Dữ liệu và import
 
-**Cutting Record** hỗ trợ Frappe **Data Import** với XLSX/CSV. Tải template từ DocType này; các Link dùng `name` của master trên site. `Product`, `Color`, `Market`, `Plan Code`, `Quantity` và `Occurred At` bắt buộc. Lịch sử có thể để trống `Factory Device`; khi thiếu thiết bị có thể nhập `Company` và `Device UID` nếu có. Đặt `Source = Import`. Import chỉ yêu cầu master tồn tại, cho phép master lịch sử đã ngừng hoạt động; API tablet luôn yêu cầu biến thể đang hoạt động.
+**Cutting Record** hỗ trợ Frappe **Data Import** với XLSX/CSV. Tải template từ DocType này; các Link dùng `name` của master trên site. `Product`, `Product Color`, `Market`, `Plan Code`, `Quantity` và `Occurred At` bắt buộc. Lịch sử có thể để trống `Factory Device`; khi thiếu thiết bị có thể nhập `Company` và `Device UID` nếu có. Đặt `Source = Import`. Import chỉ yêu cầu master tồn tại, cho phép master lịch sử đã ngừng hoạt động; API tablet luôn yêu cầu biến thể đang hoạt động.
 
 `Occurred At` và các trường Datetime dùng giờ site theo quy ước Frappe; file Excel/CSV dùng giờ site dạng `YYYY-MM-DD HH:mm:ss`. API tablet nhận và trả `occurred_at` dạng ISO UTC, tự chuyển đổi ở biên API. Bản ghi import tạo một snapshot lịch sử `Import`. Không import trực tiếp `Cutting History`. Sửa, xóa mềm và khôi phục tạo lịch sử riêng; xóa vật lý bản ghi và chỉnh sửa lịch sử bị chặn.
 
@@ -51,7 +51,7 @@ Catalog UTF-8 Việt/Anh dùng chung frontend/backend là `cutting/i18n.json`; n
 
 API kích hoạt/kiểm tra Cutting dùng `Factory Device` có sẵn và giữ nguyên URL/payload cũ. API không gọi nhánh đăng ký có thể tạo thiết bị và không đổi tên do Admin cấp. Liên kết size được đọc từ metadata Product Variant để hỗ trợ cả `Size` cũ và `ProductSize` mới.
 
-Nếu site dùng DocType `Color` chuẩn chưa có `color_code`, `color_name` hoặc `is_active`, Cutting dùng tên bản ghi làm mã/nhãn và coi màu đó là đang hoạt động. Khi các trường này có sẵn, Cutting dùng đúng mã, tên và cờ hoạt động của master.
+Cutting lấy mã và tên màu từ các trường `color_code` và `color_name` của `Product Color`, chỉ đưa màu đang hoạt động vào danh mục. Khi nâng cấp từ Cutting 0.1.5, patch migrate chuyển liên kết màu trong Cutting Record và Cutting History theo mã màu. Nếu không tìm được Product Color trùng mã duy nhất, migrate dừng và yêu cầu tạo master tương ứng trước khi chạy lại.
 
 ## Kiểm tra và phát hành
 
@@ -63,4 +63,4 @@ bench --site <test-site> run-tests --app cutting
 
 Chạy integration test trên site riêng đã cài `factory_management` và `cutting`. Test tạo master/thiết bị tạm trong transaction của test framework. Không chạy bộ test này trên site đang vận hành.
 
-Source chuẩn tại `integrations/frappe/cutting` trong repo FactoryManagement. Khi phát hành, đồng bộ đúng nội dung thư mục app vào repo riêng, tăng phiên bản trong `pyproject.toml`, `cutting/__init__.py`, manifest và OpenAPI, commit rồi push nhánh `version-16`/tag tương ứng. Cài mới tạo schema trống; người dùng tự import dữ liệu nghiệp vụ sau.
+Source chuẩn tại `integrations/frappe/cutting` trong repo FactoryManagement. Khi phát hành, đồng bộ đúng nội dung thư mục app vào repo riêng, tăng phiên bản trong `pyproject.toml`, `cutting/__init__.py`, manifest và OpenAPI, commit rồi push nhánh `version-16`/tag tương ứng. Bản 0.1.6 yêu cầu Factory Management tối thiểu 0.1.40. Cài mới tạo schema trống; người dùng tự import dữ liệu nghiệp vụ sau.

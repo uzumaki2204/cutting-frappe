@@ -16,11 +16,11 @@ class TestCutting(IntegrationTestCase):
         suffix = uuid.uuid4().hex[:10]
         self.company = frappe.get_doc({"doctype": "Company", "company_code": "CUT-" + suffix, "company_name": suffix, "active": 1}).insert()
         self.product = frappe.get_doc({"doctype": "Product", "product_code": "CUT-" + suffix, "product_name": suffix, "is_active": 1}).insert()
-        self.color = frappe.get_doc({"doctype": "Color", "color_code": "CUT-" + suffix, "color_name": suffix, "color": "#" + suffix[:6], "is_active": 1}).insert(set_name="CUT-" + suffix)
+        self.color = frappe.get_doc({"doctype": "Product Color", "color_code": "CUT-" + suffix, "color_name": suffix, "is_active": 1}).insert(set_name="CUT-" + suffix)
         self.market = frappe.get_doc({"doctype": "Market", "code": "CUT-" + suffix, "name_en": suffix, "is_active": 1}).insert()
         size_type = frappe.get_meta("Product Variant").get_field("size").options
         self.size = frappe.get_doc({"doctype": size_type, "size_label": "CUT-" + suffix, "size_code": "CUT-" + suffix, "is_active": 1}).insert(set_name="CUT-" + suffix)
-        frappe.get_doc({"doctype": "Product Variant", "product": self.product.name, "color": self.color.name, "market": self.market.name, "size": self.size.name, "is_active": 1}).insert()
+        frappe.get_doc({"doctype": "Product Variant", "product": self.product.name, "product_color": self.color.name, "market": self.market.name, "size": self.size.name, "is_active": 1}).insert()
         device_id = str(uuid.uuid4())
         values = {"doctype": "Factory Device", "name": device_id, "device_name": "CUT-" + suffix, "company": self.company.name, "status": "Approved", "is_active": 1}
         for field in ("device_id", "device_uid"):
@@ -55,6 +55,27 @@ class TestCutting(IntegrationTestCase):
         self.assertEqual(frappe.db.count("Factory Device"), before)
         if frappe.get_meta("Factory Device").has_field("last_seen_at"):
             self.assertTrue(frappe.db.get_value("Factory Device", self.device.name, "last_seen_at"))
+
+    def test_activation_bootstraps_product_color_catalog(self):
+        with patch.object(devices, "_require_current_epoch"):
+            registration = api.register_device(self.device.name)
+        catalog = api.bootstrap(self.device.name)["catalog"]
+
+        self.assertEqual(registration["device"]["id"], self.device.name)
+        self.assertIn({"id": self.product.name, "code": self.product.product_code, "name": self.product.product_name, "season_id": None}, catalog["products"])
+        self.assertIn({"id": self.color.name, "code": self.color.color_code, "name": self.color.color_name}, catalog["colors"])
+        self.assertIn({"id": self.market.name, "code": self.market.code, "name": self.market.name_en}, catalog["markets"])
+        self.assertIn({"product": self.product.name, "color": self.color.name, "market": self.market.name}, catalog["product_variants"])
+        self.assertEqual(frappe.get_meta("Cutting Record").get_field("color").options, "Product Color")
+        for role in ("Cutting Manager", "Cutting Viewer"):
+            self.assertEqual(
+                frappe.db.get_value(
+                    "Custom DocPerm",
+                    {"parent": "Product Color", "role": role, "permlevel": 0},
+                    "select",
+                ),
+                1,
+            )
 
     def test_replay_does_not_duplicate_or_overwrite_admin_edit(self):
         api.sync_records(self.device.name, [self.item()])
@@ -111,6 +132,7 @@ class TestCutting(IntegrationTestCase):
         api.sync_records(self.device.name, [self.item("one"), self.item("two", 5)])
         data = reporting.report_summary("2026-10-29", "2026-10-29", {"device": self.device.name})
         self.assertEqual(data["rows"][0]["quantity"], 15)
+        self.assertEqual(data["rows"][0]["colorCode"], self.color.color_code)
         self.assertEqual(data["rows"][0]["startOfWeek"], "2026-10-26")
         self.assertEqual(data["metadata"]["sourceRowCount"], 2)
         with self.assertRaises(frappe.ValidationError):
@@ -121,6 +143,47 @@ class TestCutting(IntegrationTestCase):
         with self.assertRaises(frappe.PermissionError):
             reporting.admin_summary()
         frappe.set_user("Administrator")
+
+    def test_migration_maps_legacy_color_references_by_color_code(self):
+        from cutting.patches.migrate_cutting_colors_to_product_color import execute
+
+        api.sync_records(self.device.name, [self.item("color-migration")])
+        record = self.record("color-migration")
+        legacy_color = frappe.get_doc({
+            "doctype": "Color",
+            "color_code": self.color.color_code,
+            "color_name": self.color.color_name,
+            "color": "#123456",
+            "is_active": 1,
+        }).insert(set_name="LEGACY-" + uuid.uuid4().hex[:8])
+        frappe.db.set_value("Cutting Record", record.name, "color", legacy_color.name)
+        history_name = frappe.db.get_value("Cutting History", {"cutting_record": record.name}, "name")
+        frappe.db.set_value("Cutting History", history_name, "color", legacy_color.name)
+
+        execute()
+        execute()
+
+        self.assertEqual(frappe.db.get_value("Cutting Record", record.name, "color"), self.color.name)
+        self.assertEqual(frappe.db.get_value("Cutting History", history_name, "color"), self.color.name)
+
+    def test_migration_rejects_unmapped_legacy_color_without_partial_writes(self):
+        from cutting.patches.migrate_cutting_colors_to_product_color import execute
+
+        api.sync_records(self.device.name, [self.item("unmapped-color")])
+        record = self.record("unmapped-color")
+        legacy_color = frappe.get_doc({
+            "doctype": "Color",
+            "color_code": "NO-MATCH-" + uuid.uuid4().hex[:8],
+            "color_name": "Unmapped",
+            "color": "#654321",
+            "is_active": 1,
+        }).insert(set_name="LEGACY-" + uuid.uuid4().hex[:8])
+        frappe.db.set_value("Cutting Record", record.name, "color", legacy_color.name)
+
+        with self.assertRaises(frappe.ValidationError):
+            execute()
+
+        self.assertEqual(frappe.db.get_value("Cutting Record", record.name, "color"), legacy_color.name)
 
     def test_utc_api_round_trip_and_local_date_boundary(self):
         item = self.item()

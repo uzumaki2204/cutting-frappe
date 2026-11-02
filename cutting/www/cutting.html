@@ -79,9 +79,9 @@
                 <label class="control-label" for="quantity">{{ texts['ui.quantity'] }}</label>
                 <input id="quantity" class="form-control" type="number" min="1" max="2147483647" step="1" inputmode="numeric" required>
               </div>
-              <div class="d-flex flex-wrap">
-                <button type="submit" class="btn btn-primary mr-2">{{ texts['ui.save'] }}</button>
-                <button id="cancel-edit" type="button" class="btn btn-default" hidden>{{ texts['ui.cancel'] }}</button>
+              <div class="d-flex flex-column">
+                <button type="submit" class="btn btn-primary w-100">{{ texts['ui.save'] }}</button>
+                <button id="cancel-edit" type="button" class="btn btn-default mt-2 align-self-center" hidden>{{ texts['ui.cancel'] }}</button>
               </div>
             </fieldset>
           </form>

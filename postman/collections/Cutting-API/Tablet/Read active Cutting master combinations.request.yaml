@@ -14,4 +14,18 @@ scripts:
     code: |-
       pm.test("Expected HTTP status", () => pm.response.to.have.status(200));
       pm.test("Frappe message envelope", () => pm.expect(pm.response.json()).to.have.property("message"));
-      pm.test("Variant catalog", () => pm.expect(pm.response.json().message.catalog.product_variants).to.be.an("array"));
+      const catalog = pm.response.json().message.catalog;
+      pm.test("Variant catalog", () => pm.expect(catalog.product_variants).to.be.an("array"));
+      pm.test("Option labels have IDs, codes and names", () => {
+        for (const key of ["products", "colors", "markets"]) {
+          pm.expect(catalog[key]).to.be.an("array");
+          for (const option of catalog[key]) {
+            pm.expect(option).to.have.property("id");
+            pm.expect(option).to.have.property("code");
+            pm.expect(option).to.have.property("name");
+          }
+        }
+      });
+      pm.test("Tablet variant color key remains compatible", () => {
+        for (const variant of catalog.product_variants) pm.expect(variant).to.have.property("color");
+      });
