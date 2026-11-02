@@ -269,7 +269,7 @@
 
 @media (min-width: 768px) and (max-width: 1399.98px) {
   #cutting-app .cutting-records-table {
-    font-size: .875rem;
+    font-size: 13px;
     table-layout: fixed;
   }
 
@@ -284,14 +284,14 @@
     white-space: nowrap;
   }
 
-  #cutting-app .cutting-records-table col:nth-child(1) { width: 12%; }
-  #cutting-app .cutting-records-table col:nth-child(2) { width: 13%; }
+  #cutting-app .cutting-records-table col:nth-child(1) { width: 16%; }
+  #cutting-app .cutting-records-table col:nth-child(2) { width: 12%; }
   #cutting-app .cutting-records-table col:nth-child(3) { width: 12%; }
-  #cutting-app .cutting-records-table col:nth-child(4) { width: 8%; }
-  #cutting-app .cutting-records-table col:nth-child(5) { width: 13%; }
-  #cutting-app .cutting-records-table col:nth-child(6) { width: 8%; }
-  #cutting-app .cutting-records-table col:nth-child(7) { width: 18%; }
-  #cutting-app .cutting-records-table col:nth-child(8) { width: 16%; }
+  #cutting-app .cutting-records-table col:nth-child(4) { width: 7%; }
+  #cutting-app .cutting-records-table col:nth-child(5) { width: 12%; }
+  #cutting-app .cutting-records-table col:nth-child(6) { width: 9%; }
+  #cutting-app .cutting-records-table col:nth-child(7) { width: 17%; }
+  #cutting-app .cutting-records-table col:nth-child(8) { width: 15%; }
 }
 
 @media (min-width: 768px) and (max-width: 991.98px) {
