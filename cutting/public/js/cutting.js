@@ -288,10 +288,16 @@
     for (const id of ids) {
       const select = controls[id];
       const option = select.selectedOptions[0];
-      pickerLabels[id].textContent = select.value && option ? option.textContent : t(pickerTitles[id]);
+      pickerLabels[id].textContent = select.value && option ? pickerText(id, option) : t(pickerTitles[id]);
     }
     pickerTriggers.market.disabled = !controls.product.value;
     pickerTriggers.color.disabled = !controls.product.value || !controls.market.value;
+  }
+
+  function pickerText(kind, option) {
+    const code = option.dataset.code || option.value;
+    const name = option.dataset.name;
+    return kind === "product" || !name || name === code ? code : `${code} - ${name}`;
   }
 
   function renderSelectors() {
@@ -315,17 +321,24 @@
     for (const option of options) {
       const card = document.createElement("button");
       card.type = "button";
-      card.className = `btn cutting-picker-card${option.value === select.value ? " active btn-primary" : " btn-default"}`;
-      card.setAttribute("aria-pressed", String(option.value === select.value));
-      const code = document.createElement("span");
-      code.className = "cutting-picker-card-code";
-      code.textContent = option.dataset.code || option.textContent;
-      card.append(code);
-      if (option.dataset.name && option.dataset.name !== option.dataset.code) {
-        const name = document.createElement("span");
-        name.className = "cutting-picker-card-name";
-        name.textContent = option.dataset.name;
-        card.append(name);
+      const selected = option.value === select.value;
+      card.className = `btn cutting-picker-card${kind !== "product" ? " cutting-picker-card-inline" : ""}${selected ? " active btn-primary" : " btn-default"}`;
+      card.setAttribute("aria-pressed", String(selected));
+      if (kind === "product") {
+        const code = document.createElement("span");
+        code.className = "cutting-picker-card-code";
+        code.textContent = option.dataset.code || option.textContent;
+        card.append(code);
+        if (option.dataset.name && option.dataset.name !== option.dataset.code) {
+          const name = document.createElement("span");
+          name.className = "cutting-picker-card-name";
+          name.textContent = option.dataset.name;
+          card.append(name);
+        }
+      } else {
+        const label = document.createElement("span");
+        label.textContent = pickerText(kind, option);
+        card.append(label);
       }
       card.addEventListener("click", () => {
         const chosen = activePicker;

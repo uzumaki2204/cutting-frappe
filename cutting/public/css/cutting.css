@@ -76,6 +76,24 @@
   z-index: 1;
 }
 
+.cutting-picker-card.active {
+  background-color: #285a83;
+  border-color: #285a83;
+  color: #fff;
+}
+
+.cutting-picker-card-inline {
+  align-items: center;
+  min-height: 2.75rem;
+  text-align: center;
+}
+
+.cutting-picker-card-inline span {
+  font-weight: 700;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
 .cutting-picker-card-code {
   font-weight: 700;
   line-height: 1.3;
