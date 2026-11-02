@@ -57,7 +57,7 @@
 }
 
 .cutting-picker-card {
-  align-items: flex-start;
+  align-items: center;
   display: flex;
   flex-direction: column;
   gap: .25rem;
@@ -65,7 +65,7 @@
   min-height: 4.25rem;
   overflow-wrap: anywhere;
   padding: .625rem .75rem;
-  text-align: left;
+  text-align: center;
   white-space: normal;
   width: 100%;
 }
