@@ -17,6 +17,22 @@
   flex: 0 0 auto;
 }
 
+#cutting-app:fullscreen {
+  background-color: #fff;
+  color-scheme: light;
+  min-height: 100vh;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+#cutting-app:fullscreen::backdrop {
+  background-color: #fff;
+}
+
+#cutting-app:fullscreen .card {
+  background-color: #fff;
+}
+
 .cutting-picker-dialog {
   border: 0;
   border-radius: .5rem;

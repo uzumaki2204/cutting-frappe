@@ -17,6 +17,8 @@
   const pickerClose = $("entry-picker-close");
   let activePicker = "";
   let pickerRestoreTarget;
+  let autoFullscreenAttempted = false;
+  let focusedInputScrollFrame = 0;
   const filters = {
     product: $("filter-product"), color: $("filter-color"), market: $("filter-market"),
     from: $("filter-from"), to: $("filter-to"), identifier: $("filter-identifier"),
@@ -152,11 +154,35 @@
     $("fullscreen-button").title = text;
   }
 
+  function autoFullscreenOnInteraction(event) {
+    if (!event.isTrusted || autoFullscreenAttempted || document.fullscreenElement) return;
+    if (event.target instanceof Element && event.target.closest("#fullscreen-button")) return;
+    autoFullscreenAttempted = true;
+    try { root.requestFullscreen().catch(() => notice(t("ui.fullscreen_failed"), true)); }
+    catch (_) { notice(t("ui.fullscreen_failed"), true); }
+  }
+
   async function toggleFullscreen() {
     try {
       if (document.fullscreenElement) await document.exitFullscreen();
       else await root.requestFullscreen();
     } catch (_) { notice(t("ui.fullscreen_failed"), true); }
+  }
+
+  function keepFocusedEntryInputVisible() {
+    const input = document.activeElement;
+    if (!(input instanceof HTMLElement) || !["identifier", "quantity"].includes(input.id)) return;
+    cancelAnimationFrame(focusedInputScrollFrame);
+    focusedInputScrollFrame = requestAnimationFrame(() => {
+      const viewport = window.visualViewport;
+      const viewportTop = viewport?.offsetTop || 0;
+      const viewportBottom = viewportTop + (viewport?.height || window.innerHeight);
+      const bounds = input.getBoundingClientRect();
+      const margin = 16;
+      if (bounds.top < viewportTop + margin || bounds.bottom > viewportBottom - margin) {
+        input.scrollIntoView({ block: "center", inline: "nearest" });
+      }
+    });
   }
 
   async function checkConnection() {
@@ -535,7 +561,12 @@
   $("previous-page").addEventListener("click", () => { currentPage = Math.max(1, currentPage - 1); render(); });
   $("next-page").addEventListener("click", () => { currentPage += 1; render(); });
   $("fullscreen-button").addEventListener("click", toggleFullscreen);
+  root.addEventListener("click", autoFullscreenOnInteraction, true);
+  root.addEventListener("keydown", autoFullscreenOnInteraction, true);
   document.addEventListener("fullscreenchange", updateFullscreenButton);
+  root.addEventListener("focusin", keepFocusedEntryInputVisible);
+  window.visualViewport?.addEventListener("resize", keepFocusedEntryInputVisible);
+  window.visualViewport?.addEventListener("scroll", keepFocusedEntryInputVisible);
   $("network-button").addEventListener("click", checkConnection);
   $("open-device-settings").addEventListener("click", () => {
     $("device-id").value = deviceId;
