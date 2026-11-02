@@ -329,12 +329,6 @@
         code.className = "cutting-picker-card-code";
         code.textContent = option.dataset.code || option.textContent;
         card.append(code);
-        if (option.dataset.name && option.dataset.name !== option.dataset.code) {
-          const name = document.createElement("span");
-          name.className = "cutting-picker-card-name";
-          name.textContent = option.dataset.name;
-          card.append(name);
-        }
       } else {
         const label = document.createElement("span");
         label.textContent = pickerText(kind, option);

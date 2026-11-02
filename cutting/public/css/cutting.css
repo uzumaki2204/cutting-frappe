@@ -100,13 +100,6 @@
   overflow-wrap: anywhere;
 }
 
-.cutting-picker-card-name {
-  font-size: .9em;
-  font-weight: 400;
-  line-height: 1.35;
-  overflow-wrap: anywhere;
-}
-
 @media (min-width: 576px) {
   .cutting-picker-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
