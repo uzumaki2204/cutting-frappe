@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Cutting API",
-    "version": "0.1.26",
+    "version": "0.1.27",
     "description": "Standalone Cutting for Frappe 16. Tablet calls use approved Factory Device IDs. Desk calls use Frappe User roles. No .NET API compatibility routes or machine ingest."
   },
   "servers": [
@@ -451,7 +451,7 @@
                 "required": [
                   "id"
                 ],
-                "description": "At most 500 operations. Creates are idempotent by device/local_event_id, including after later edits. Updates and deletes are limited to the owning device. Updates are allowed only when the record's occurred_at date is today in the Frappe site timezone; expired edits return a localized validation error. A validation failure rolls back the whole batch.",
+                "description": "At most 500 operations. Creates are idempotent by device/local_event_id, including after later edits. Updates and deletes are limited to the owning device. Updates and deletes are allowed only when the record's occurred_at date is today in the Frappe site timezone; expired operations return a localized validation error. A validation failure rolls back the whole batch.",
                 "properties": {
                   "id": {
                     "type": "string",
@@ -486,6 +486,7 @@
       "post": {
         "operationId": "cutting_api_soft_delete",
         "summary": "Move a Cutting record to Trash",
+        "description": "Only records whose occurred_at date is today in the Frappe site timezone can be moved to Trash.",
         "tags": [
           "Desk"
         ],
@@ -534,7 +535,7 @@
             }
           },
           "417": {
-            "description": "Localized validation error; no writes from the failed batch are committed.",
+            "description": "Localized validation error, including when the record's occurred_at date is not today in the site timezone; the record remains unchanged.",
             "content": {
               "application/json": {
                 "schema": {

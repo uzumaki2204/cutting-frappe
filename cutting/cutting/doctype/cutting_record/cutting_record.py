@@ -22,6 +22,14 @@ def _fail(key):
     frappe.throw(message(key), frappe.ValidationError)
 
 
+def _site_local_date(value):
+    if not isinstance(value, datetime):
+        value = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    if value.tzinfo:
+        value = value.astimezone(site_zone()).replace(tzinfo=None)
+    return value.date()
+
+
 def event_uid(device, local_event_id):
     if not device or not local_event_id:
         return None
@@ -103,17 +111,13 @@ class CuttingRecord(Document):
             state_changed = bool(previous.is_deleted) != bool(self.is_deleted)
             if state_changed and not self.flags.get("cutting_state_action"):
                 _fail("error.state_action")
+            if state_changed and self.is_deleted and _site_local_date(previous.occurred_at) != site_now().date():
+                _fail("error.delete_today_only")
             if previous.is_deleted and not state_changed:
                 _fail("error.restore_first")
             content_changed = any((previous.get(field) or None) != (self.get(field) or None) for field in EDITABLE_FIELDS)
-            if content_changed:
-                previous_occurred = previous.occurred_at
-                if not isinstance(previous_occurred, datetime):
-                    previous_occurred = datetime.fromisoformat(str(previous_occurred).replace("Z", "+00:00"))
-                if previous_occurred.tzinfo:
-                    previous_occurred = previous_occurred.astimezone(site_zone()).replace(tzinfo=None)
-                if previous_occurred.date() != site_now().date():
-                    _fail("error.edit_today_only")
+            if content_changed and _site_local_date(previous.occurred_at) != site_now().date():
+                _fail("error.edit_today_only")
         if (self.source == "Cutting" or self.flags.get("cutting_validate_active")) and not self.flags.get("cutting_state_action"):
             if not self.device:
                 _fail("error.device_missing")

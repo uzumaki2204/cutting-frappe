@@ -1,6 +1,6 @@
 $kind: collection
 name: Cutting-API
-description: Cutting API contract requests with reusable assertions. Use a dedicated test device and a local secret environment.
+description: Cutting API contract requests with reusable assertions. Updates and deletes are allowed only for records dated today in the Frappe site timezone. Use a dedicated test device and a local secret environment.
 variables:
   baseUrl: 'http://127.0.0.1:8000'
   deviceId: ''

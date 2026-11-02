@@ -231,6 +231,7 @@
       const value = localStorage.getItem(stateKey());
       const state = value ? JSON.parse(value) : core.empty();
       if (![state.records, state.updates, state.deletes, state.saved].every(Array.isArray)) throw new Error();
+      if (!state.delete_dates || typeof state.delete_dates !== "object" || Array.isArray(state.delete_dates)) state.delete_dates = {};
       return state;
     } catch (_) { storageReady = false; throw new Error(t("ui.storage_error")); }
   }
@@ -528,9 +529,10 @@
       const actionGroup = document.createElement("div"); actionGroup.className = "cutting-record-actions";
       const editableToday = siteDateKey(row.occurred_at) === todayKey;
       for (const [key, handler] of [["ui.edit", () => editRecord(row)], ["ui.delete", () => deleteRecord(row)]]) {
-        const editBlocked = key === "ui.edit" && !editableToday;
-        const buttonText = editBlocked ? t("error.edit_today_only") : t(key);
-        const button = document.createElement("button"); button.type = "button"; button.className = "btn btn-sm " + (key === "ui.delete" ? "cutting-record-delete" : "cutting-record-edit"); button.setAttribute("aria-label", buttonText); button.title = buttonText; button.disabled = inFlight || editBlocked;
+        const actionBlocked = !editableToday;
+        const restrictionKey = key === "ui.delete" ? "error.delete_today_only" : "error.edit_today_only";
+        const buttonText = actionBlocked ? t(restrictionKey) : t(key);
+        const button = document.createElement("button"); button.type = "button"; button.className = "btn btn-sm " + (key === "ui.delete" ? "cutting-record-delete" : "cutting-record-edit"); button.setAttribute("aria-label", buttonText); button.title = buttonText; button.disabled = inFlight || actionBlocked;
         const icon = document.createElementNS("http://www.w3.org/2000/svg", "svg"); icon.setAttribute("viewBox", "0 0 24 24"); icon.setAttribute("aria-hidden", "true");
         const path = document.createElementNS("http://www.w3.org/2000/svg", "path"); path.setAttribute("d", key === "ui.delete" ? "M4 7h16M10 11v6m4-6v6M6 7l1 14h10l1-14M9 7V4h6v3" : "M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z"); icon.append(path); button.append(icon);
         button.addEventListener("click", handler); actionGroup.append(button);
@@ -557,6 +559,7 @@
   function cancelEdit() { editing = null; $("cancel-edit").hidden = true; $("quantity").value = ""; }
 
   function deleteRecord(row) {
+    if (siteDateKey(row.occurred_at) !== siteTodayKey()) { notice(t("error.delete_today_only"), true); return; }
     if (inFlight || deleteRecordConfirmDialog.open) return;
     pendingDeleteRecord = row;
     deleteRecordConfirmDialog.showModal();
@@ -571,6 +574,7 @@
     const row = pendingDeleteRecord;
     if (!row || !deleteRecordConfirmDialog.open) return;
     deleteRecordConfirmDialog.close();
+    if (siteDateKey(row.occurred_at) !== siteTodayKey()) { notice(t("error.delete_today_only"), true); return; }
     try { const state = readState(); core.remove(state, row.local_event_id); persist(state); render(); syncQueue(); }
     catch (error) { notice(error.message, true); }
   }
@@ -578,20 +582,35 @@
   async function syncQueue() {
     if (inFlight || !storageReady || !cache.approved || !deviceId) return;
     let state = readState();
-    const expiredUpdates = state.updates.filter((row) => siteDateKey(row.occurred_at) !== siteTodayKey());
-    if (expiredUpdates.length) {
+    const hasExpiredUpdates = state.updates.some((row) => siteDateKey(row.occurred_at) !== siteTodayKey());
+    const hasExpiredDeletes = state.deletes.some((row) => !state.delete_dates[row.local_event_id] || siteDateKey(state.delete_dates[row.local_event_id]) !== siteTodayKey());
+    if (hasExpiredUpdates || hasExpiredDeletes) {
       inFlight = true; render();
       try {
         const rows = await request("cutting.api.get_device_records", { id: deviceId });
         state = readState();
-        const expiredIds = state.updates
-          .filter((row) => siteDateKey(row.occurred_at) !== siteTodayKey())
+        const todayKey = siteTodayKey();
+        const expiredUpdateIds = state.updates
+          .filter((row) => siteDateKey(row.occurred_at) !== todayKey)
           .map((row) => row.local_event_id);
-        if (expiredIds.length) {
-          core.discardUpdates(state, expiredIds);
-          notice(t("ui.expired_edits_discarded", { count: expiredIds.length }), true);
-        }
+        const serverById = new Map(rows.map((row) => [row.local_event_id, row]));
+        const deleteDates = state.deletes.map((row) => ({
+          id: row.local_event_id,
+          occurredAt: state.delete_dates[row.local_event_id] || serverById.get(row.local_event_id)?.occurred_at,
+        }));
+        const unknownDeleteIds = deleteDates.filter((row) => !row.occurredAt).map((row) => row.id);
+        const expiredDeleteIds = deleteDates
+          .filter((row) => row.occurredAt && siteDateKey(row.occurredAt) !== todayKey)
+          .map((row) => row.id);
+        if (expiredUpdateIds.length) core.discardUpdates(state, expiredUpdateIds);
+        if (expiredDeleteIds.length) core.discardDeletes(state, expiredDeleteIds);
         persist(core.mergeServer(state, rows));
+        if (expiredUpdateIds.length) notice(t("ui.expired_edits_discarded", { count: expiredUpdateIds.length }), true);
+        if (expiredDeleteIds.length) notice(t("ui.expired_deletes_discarded", { count: expiredDeleteIds.length }), true);
+        if (unknownDeleteIds.length) {
+          notice(t("ui.delete_date_unavailable"), true);
+          return;
+        }
       } catch (error) {
         notice(error.message || t("ui.sync_failed"), true);
         return;
@@ -599,7 +618,11 @@
     }
     state = readState();
     if (!state.records.length && !state.updates.length && !state.deletes.length) return;
-    const sent = { records: state.records.slice(0, 200), updates: state.updates.slice(0, 200), deletes: state.deletes.slice(0, 100) };
+    const sent = {
+      records: state.records.slice(0, 200),
+      updates: state.updates.slice(0, 200),
+      deletes: state.deletes.slice(0, 100),
+    };
     inFlight = true; render();
     try {
       const result = await request("cutting.api.sync_records", { id: deviceId, ...sent }, true);
