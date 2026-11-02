@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Cutting API",
-    "version": "0.1.20",
+    "version": "0.1.21",
     "description": "Standalone Cutting for Frappe 16. Tablet calls use approved Factory Device IDs. Desk calls use Frappe User roles. No .NET API compatibility routes or machine ingest."
   },
   "servers": [
@@ -1387,6 +1387,7 @@
       "Catalog": {
         "type": "object",
         "required": [
+          "customers",
           "products",
           "colors",
           "markets",
@@ -1394,15 +1395,29 @@
           "product_variants"
         ],
         "properties": {
+          "customers": {
+            "type": "array",
+            "description": "Active UNIQLO customers identified by exact customer code or name, ignoring case and surrounding whitespace.",
+            "items": {
+              "type": "object",
+              "required": ["id", "code", "name"],
+              "properties": {
+                "id": {"type": "string", "description": "Customer.name"},
+                "code": {"type": "string"},
+                "name": {"type": "string"}
+              }
+            }
+          },
           "products": {
             "type": "array",
-            "description": "Active Product options. The code and name values come from product_code and product_name.",
+            "description": "Active Product options assigned to an active UNIQLO customer. The code and name values come from product_code and product_name.",
             "items": {
               "type": "object",
               "required": [
                 "id",
                 "code",
-                "name"
+                "name",
+                "customer_id"
               ],
               "properties": {
                 "id": {
@@ -1414,6 +1429,10 @@
                 },
                 "name": {
                   "type": "string"
+                },
+                "customer_id": {
+                  "type": "string",
+                  "description": "Customer.name linked from Product.customer."
                 }
               }
             }

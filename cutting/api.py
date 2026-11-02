@@ -135,10 +135,31 @@ def _option(row, code, title, **extra):
 def bootstrap(id: str | None = None):
     _device(id)
     product_fields = ["name", "product_code", "product_name"]
+    has_customer_field = frappe.get_meta("Product").has_field("customer")
+    if has_customer_field:
+        product_fields.append("customer")
     season_field = "production_season" if frappe.get_meta("Product").has_field("production_season") else "season"
     if frappe.get_meta("Product").has_field(season_field):
         product_fields.append(season_field)
-    products = frappe.get_all("Product", fields=product_fields, filters={"is_active": 1}, limit_page_length=20000)
+    customers = frappe.get_all(
+        "Customer",
+        fields=["name", "customer_code", "customer_name"],
+        filters={"is_active": 1},
+        limit_page_length=20000,
+    )
+    uniqlo_customers = [
+        row for row in customers
+        if any(
+            str(row.get(field) or "").strip().upper() == "UNIQLO"
+            for field in ("customer_code", "customer_name")
+        )
+    ]
+    uniqlo_customer_ids = {row.name for row in uniqlo_customers}
+    product_filters = {"is_active": 1, "customer": ["in", sorted(uniqlo_customer_ids)]}
+    products = (
+        frappe.get_all("Product", fields=product_fields, filters=product_filters, limit_page_length=20000)
+        if has_customer_field and uniqlo_customer_ids else []
+    )
     colors = frappe.get_all(
         "Product Color",
         fields=["name", "color_code", "color_name"],
@@ -153,7 +174,17 @@ def bootstrap(id: str | None = None):
     market_ids = {row.name for row in markets}
     season_names = {row.season_code: row.name for row in seasons}
     catalog = {
-        "products": [_option(row, "product_code", "product_name", season_id=season_names.get(row.get(season_field), row.get(season_field))) for row in products],
+        "customers": [_option(row, "customer_code", "customer_name") for row in uniqlo_customers],
+        "products": [
+            _option(
+                row,
+                "product_code",
+                "product_name",
+                customer_id=row.get("customer"),
+                season_id=season_names.get(row.get(season_field), row.get(season_field)),
+            )
+            for row in products
+        ],
         "colors": [_option(row, "color_code", "color_name") for row in colors],
         "markets": [_option(row, "code", "name_en") for row in markets],
         "seasons": [_option(row, "season_code", "season_name") for row in seasons],

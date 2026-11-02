@@ -14,6 +14,7 @@ response:
       {
         "message": {
           "catalog": {
+            "customers": [],
             "products": [],
             "colors": [],
             "markets": [],

@@ -7,6 +7,7 @@
   let deviceSettings = null;
   const $ = (id) => document.getElementById(id) || deviceSettings?.$wrapper?.[0]?.querySelector(`#${id}`);
   const ids = ["product", "market", "color"];
+  const UNIQLO_CUSTOMER = "UNIQLO";
   const controls = Object.fromEntries(ids.map((id) => [id, $(id)]));
   const pickerTriggers = Object.fromEntries(ids.map((id) => [id, $(`${id}-picker`)]));
   const pickerLabels = Object.fromEntries(ids.map((id) => [id, $(`${id}-picker-label`)]));
@@ -332,7 +333,12 @@
   function renderSelectors() {
     const catalog = cache.catalog || {};
     const variants = catalog.product_variants || [];
-    const products = (catalog.products || []).filter((row) => variants.some((v) => v.product === row.id));
+    const uniqloCustomerIds = new Set((catalog.customers || [])
+      .filter((customer) => [customer.code, customer.name]
+        .some((value) => String(value || "").trim().toUpperCase() === UNIQLO_CUSTOMER))
+      .map((customer) => customer.id));
+    const products = (catalog.products || []).filter((row) => uniqloCustomerIds.has(row.customer_id)
+      && variants.some((v) => v.product === row.id));
     options(controls.product, products);
     const choices = variants.filter((row) => row.product === controls.product.value);
     options(controls.market, (catalog.markets || []).filter((row) => choices.some((v) => v.market === row.id)));

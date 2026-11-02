@@ -15,7 +15,19 @@ class TestCutting(IntegrationTestCase):
         frappe.set_user("Administrator")
         suffix = uuid.uuid4().hex[:10]
         self.company = frappe.get_doc({"doctype": "Company", "company_code": "CUT-" + suffix, "company_name": suffix, "active": 1}).insert()
-        self.product = frappe.get_doc({"doctype": "Product", "product_code": "CUT-" + suffix, "product_name": suffix, "is_active": 1}).insert()
+        self.customer = frappe.get_doc({
+            "doctype": "Customer",
+            "customer_code": "CUT-" + suffix,
+            "customer_name": "UNIQLO",
+            "is_active": 1,
+        }).insert()
+        self.product = frappe.get_doc({
+            "doctype": "Product",
+            "product_code": "CUT-" + suffix,
+            "product_name": suffix,
+            "customer": self.customer.name,
+            "is_active": 1,
+        }).insert()
         self.color = frappe.get_doc({"doctype": "Product Color", "color_code": "CUT-" + suffix, "color_name": suffix, "is_active": 1}).insert(set_name="CUT-" + suffix)
         self.market = frappe.get_doc({"doctype": "Market", "code": "CUT-" + suffix, "name_en": suffix, "is_active": 1}).insert()
         size_type = frappe.get_meta("Product Variant").get_field("size").options
@@ -57,12 +69,40 @@ class TestCutting(IntegrationTestCase):
             self.assertTrue(frappe.db.get_value("Factory Device", self.device.name, "last_seen_at"))
 
     def test_activation_bootstraps_product_color_catalog(self):
+        other_customer = frappe.get_doc({
+            "doctype": "Customer",
+            "customer_code": "OTHER-" + uuid.uuid4().hex[:10],
+            "customer_name": "Other Customer",
+            "is_active": 1,
+        }).insert()
+        other_product = frappe.get_doc({
+            "doctype": "Product",
+            "product_code": "OTHER-" + uuid.uuid4().hex[:10],
+            "product_name": "Other Customer Product",
+            "customer": other_customer.name,
+            "is_active": 1,
+        }).insert()
         with patch.object(devices, "_require_current_epoch"):
             registration = api.register_device(self.device.name)
         catalog = api.bootstrap(self.device.name)["catalog"]
 
         self.assertEqual(registration["device"]["id"], self.device.name)
-        self.assertIn({"id": self.product.name, "code": self.product.product_code, "name": self.product.product_name, "season_id": None}, catalog["products"])
+        self.assertIn(
+            {"id": self.customer.name, "code": self.customer.customer_code, "name": self.customer.customer_name},
+            catalog["customers"],
+        )
+        self.assertIn(
+            {
+                "id": self.product.name,
+                "code": self.product.product_code,
+                "name": self.product.product_name,
+                "customer_id": self.customer.name,
+                "season_id": None,
+            },
+            catalog["products"],
+        )
+        self.assertNotIn(other_customer.name, {row["id"] for row in catalog["customers"]})
+        self.assertNotIn(other_product.name, {row["id"] for row in catalog["products"]})
         self.assertIn({"id": self.color.name, "code": self.color.color_code, "name": self.color.color_name}, catalog["colors"])
         self.assertIn({"id": self.market.name, "code": self.market.code, "name": self.market.name_en}, catalog["markets"])
         self.assertIn({"product": self.product.name, "color": self.color.name, "market": self.market.name}, catalog["product_variants"])
