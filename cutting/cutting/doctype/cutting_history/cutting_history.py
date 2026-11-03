@@ -1,4 +1,4 @@
-"""History is an append-only record of Cutting operations."""
+"""History snapshots are immutable to edits; Frappe Delete permission controls removal."""
 
 import frappe
 from frappe.model.document import Document
@@ -10,6 +10,3 @@ class CuttingHistory(Document):
     def validate(self):
         if not self.is_new():
             frappe.throw(message("error.history_immutable"), frappe.PermissionError)
-
-    def on_trash(self):
-        frappe.throw(message("error.history_immutable"), frappe.PermissionError)

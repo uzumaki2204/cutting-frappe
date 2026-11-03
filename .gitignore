@@ -1,0 +1,10 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+test-results/
+.env
+*.environment.yaml
+!postman/environments/example.environment.yaml

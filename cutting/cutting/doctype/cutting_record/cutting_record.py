@@ -144,7 +144,14 @@ class CuttingRecord(Document):
         write_history(self, action)
 
     def on_trash(self):
-        _fail("error.use_soft_delete")
+        # Frappe checks Delete permission before on_trash; remove linked snapshots first.
+        history_names = frappe.get_all(
+            "Cutting History",
+            filters={"cutting_record": self.name},
+            pluck="name",
+        )
+        for history_name in history_names:
+            frappe.delete_doc("Cutting History", history_name, ignore_permissions=True)
 
     def set_deleted(self, deleted):
         from cutting.access import require_manager
