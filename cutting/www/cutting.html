@@ -200,7 +200,7 @@
             </div>
           </div>
         </div>
-        <div class="table-responsive">
+        <div class="table-responsive cutting-records-scroll">
           <table class="table table-bordered bg-white mb-0 cutting-records-table">
             <colgroup>
               <col><col><col><col><col><col><col><col>
@@ -217,8 +217,8 @@
             </tr></thead>
             <tbody id="records-body"></tbody>
           </table>
+          <p id="empty-records" class="text-muted m-3">{{ texts['ui.no_records'] }}</p>
         </div>
-        <p id="empty-records" class="text-muted m-3">{{ texts['ui.no_records'] }}</p>
         <div class="card-footer d-flex flex-wrap justify-content-end align-items-center">
           <button id="page-size-down" type="button" class="btn btn-default btn-sm" aria-label="{{ texts['ui.decrease_page_size'] }}" title="{{ texts['ui.decrease_page_size'] }}">−5</button>
           <span id="page-size-label" class="mx-2"></span>

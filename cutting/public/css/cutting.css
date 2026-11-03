@@ -378,3 +378,93 @@
     max-height: 100%;
   }
 }
+
+@media (min-width: 768px) {
+  #cutting-app {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    height: 100dvh;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  #cutting-app:fullscreen {
+    height: 100vh;
+    height: 100dvh;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  #cutting-app:fullscreen.cutting-entry-input-focused::after {
+    display: none;
+  }
+
+  #cutting-app > header {
+    flex: 0 0 auto;
+  }
+
+  #cutting-app > .cutting-main-layout {
+    flex: 1 1 0;
+    flex-wrap: nowrap;
+    min-height: 0;
+  }
+
+  #cutting-app .cutting-main-layout > aside,
+  #cutting-app .cutting-main-layout > section {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    margin-bottom: 0 !important;
+    min-height: 0;
+  }
+
+  #cutting-app .cutting-main-layout > aside > .card {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  #cutting-app .cutting-main-layout > section > .card {
+    display: flex;
+    flex: 1 1 0;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  #cutting-app .cutting-main-layout > section > .card > .card-header,
+  #cutting-app .cutting-main-layout > section > .card > .card-body,
+  #cutting-app .cutting-main-layout > section > .card > .card-footer {
+    flex: 0 0 auto;
+  }
+
+  #cutting-app .cutting-records-scroll {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  #cutting-app .cutting-records-table thead th {
+    background-color: #fff;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 991.98px) {
+  #cutting-app .cutting-main-layout > aside {
+    flex: 0 0 30%;
+    max-width: 30%;
+  }
+
+  #cutting-app .cutting-main-layout > section {
+    flex: 0 0 70%;
+    max-width: 70%;
+  }
+}
