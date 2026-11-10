@@ -1,11 +1,14 @@
 import uuid
 from datetime import datetime, timedelta, timezone
+from types import SimpleNamespace
 from unittest.mock import patch
 
 import frappe
 from frappe.tests import IntegrationTestCase
+from werkzeug.wrappers import Response
 
 from cutting import api, devices, reporting
+from cutting.api_response import direct_summary_response
 from cutting.cutting.doctype.cutting_record.cutting_record import event_uid
 from cutting.timeutils import site_now, site_to_utc, site_zone
 
@@ -227,6 +230,92 @@ class TestCutting(IntegrationTestCase):
         with self.assertRaises(frappe.PermissionError):
             reporting.admin_summary()
         frappe.set_user("Administrator")
+
+    def test_dotnet_summary_reads_frappe_records_and_preserves_legacy_contract(self):
+        api.sync_records(self.device.name, [self.item("summary-one", 10), self.item("summary-two", 5)])
+        deleted = frappe.get_doc({
+            "doctype": "Cutting Record", "product": self.product.name,
+            "color": self.color.name, "market": self.market.name,
+            "product_code_identifier": "PLAN", "quantity": 99,
+            "occurred_at": "2026-10-29 12:00:00", "company": self.company.name,
+            "device": self.device.name, "source": "Import",
+        }).insert()
+        frappe.db.set_value("Cutting Record", deleted.name, "is_deleted", 1)
+
+        result = reporting.summary(OccurredOnFrom="2026-10-29", OccurredOnTo="2026-10-29")
+        self.assertEqual(set(result), {"success", "code", "message", "data", "errors"})
+        self.assertTrue(result["success"])
+        self.assertIsNone(result["message"])
+        self.assertEqual(result["errors"], [])
+        data = result["data"]
+        self.assertEqual(data["metadata"]["deviceQc"], "CUTTING")
+        self.assertEqual(data["metadata"]["sourceRowCount"], 2)
+        self.assertEqual(data["metadata"]["groupedRowCount"], 1)
+        self.assertEqual(data["metadata"]["occurredOnFrom"], "2026-10-29T00:00:00")
+        self.assertEqual(data["rows"][0]["quantity"], 15)
+        self.assertEqual(data["rows"][0]["startOfWeek"], "2026-10-26T00:00:00")
+        self.assertEqual(data["rows"][0]["countrySampleCode"], self.market.code + self.product.product_code)
+        self.assertEqual([column["key"] for column in data["columns"]], [
+            "serialNo", "sampleCode", "countrySampleCode", "countryCode", "colorCode",
+            "planCode", "startOfWeek", "quantity",
+        ])
+        self.assertEqual(data["rawRows"][0]["operatorId"], "Administrator")
+        self.assertIn("T", data["rawRows"][0]["occurredOn"])
+        self.assertNotIn("paramsJson", data["rawRows"][0])
+
+        filtered = reporting.summary(
+            OccurredOnFrom="2026-10-29", OccurredOnTo="2026-10-29",
+            CompanyCode=self.company.company_code.lower(),
+            SampleCode=self.product.product_code.lower(), EventNo="SUMMARY-ONE",
+            DeviceName=self.device.device_name[1:5].lower(),
+        )
+        self.assertEqual(filtered["data"]["metadata"]["sourceRowCount"], 1)
+        self.assertEqual(filtered["data"]["rows"][0]["quantity"], 10)
+        self.assertEqual(filtered["data"]["metadata"]["companyCode"], self.company.company_code.lower())
+
+        legacy = reporting.report_summary("2026-10-29", "2026-10-29", {"device": self.device.name})
+        self.assertNotIn("success", legacy)
+        self.assertEqual(legacy["metadata"]["deviceQc"], "Cutting")
+        self.assertEqual(len(legacy["columns"]), 7)
+
+    def test_dotnet_summary_date_bounds_and_report_role(self):
+        today = "2026-10-29"
+        reversed_result = reporting.summary(OccurredOnFrom="2026-10-30", OccurredOnTo=today)
+        self.assertEqual(reversed_result["data"]["metadata"]["occurredOnFrom"], "2026-10-29T00:00:00")
+        self.assertTrue(reporting.summary(OccurredOnFrom="2026-10-01", OccurredOnTo="2026-10-31")["success"])
+        self.assertTrue(reporting.summary(OccurredOnFrom="9999-12-31", OccurredOnTo="9999-12-31")["success"])
+        for query in ({}, {"OccurredOnFrom": today},
+                      {"OccurredOnFrom": "2026-10-01", "OccurredOnTo": "2026-11-01"},
+                      {"OccurredOnFrom": "bad-date", "OccurredOnTo": today}):
+            failure = reporting.summary(**query)
+            self.assertFalse(failure["success"])
+            self.assertEqual(frappe.local.response["http_status_code"], 400)
+            self.assertEqual(failure["errors"], [failure["message"]])
+
+        email = "cutting-reader-" + uuid.uuid4().hex[:10] + "@example.invalid"
+        frappe.get_doc({
+            "doctype": "User", "email": email, "first_name": "Cutting Reader",
+            "send_welcome_email": 0, "user_type": "System User",
+            "roles": [{"role": "Cutting Report Reader"}],
+        }).insert()
+        try:
+            frappe.set_user(email)
+            self.assertTrue(reporting.summary(OccurredOnFrom=today, OccurredOnTo=today)["success"])
+            frappe.set_user("Guest")
+            denied = reporting.summary(OccurredOnFrom=today, OccurredOnTo=today)
+            self.assertEqual(denied["errors"], [denied["message"]])
+            self.assertEqual(frappe.local.response["http_status_code"], 403)
+        finally:
+            frappe.set_user("Administrator")
+
+    def test_dotnet_summary_response_hook_is_route_specific(self):
+        body = {"message": {"success": True, "code": None, "message": None, "data": {}, "errors": []}}
+        compatible = Response(frappe.as_json(body), mimetype="application/json")
+        direct_summary_response(compatible, SimpleNamespace(path="/api/method/cutting.reporting.summary"))
+        self.assertEqual(compatible.get_json(), body["message"])
+        legacy = Response(frappe.as_json(body), mimetype="application/json")
+        direct_summary_response(legacy, SimpleNamespace(path="/api/method/cutting.reporting.report_summary"))
+        self.assertEqual(legacy.get_json(), body)
 
     def test_migration_maps_legacy_color_references_by_color_code(self):
         from cutting.patches.migrate_cutting_colors_to_product_color import execute

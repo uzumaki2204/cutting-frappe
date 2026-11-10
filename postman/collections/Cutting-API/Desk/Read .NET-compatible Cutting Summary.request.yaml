@@ -1,0 +1,30 @@
+$kind: http-request
+url: '{{baseUrl}}/api/method/cutting.reporting.summary?OccurredOnFrom={{fromDate}}&OccurredOnTo={{toDate}}'
+method: GET
+headers:
+  Accept: application/json
+queryParams:
+  - key: OccurredOnFrom
+    value: '{{fromDate}}'
+  - key: OccurredOnTo
+    value: '{{toDate}}'
+order: 3001
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("Expected HTTP status", () => pm.response.to.have.status(200));
+      pm.test(".NET response envelope", () => {
+        const body = pm.response.json();
+        pm.expect(body.success).to.eql(true);
+        pm.expect(body).to.have.property("data");
+        pm.expect(body).to.have.property("errors");
+        pm.expect(body.message).to.be.null;
+      });
+      pm.test("Cutting Summary workbook shape", () => {
+        const data = pm.response.json().data;
+        pm.expect(data.metadata.deviceQc).to.eql("CUTTING");
+        pm.expect(data.columns.map((column) => column.key)).to.include("countrySampleCode");
+        pm.expect(data.rows).to.be.an("array");
+        pm.expect(data.rawRows).to.be.an("array");
+      });

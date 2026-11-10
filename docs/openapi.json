@@ -2,8 +2,8 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Cutting API",
-    "version": "0.1.30",
-    "description": "Standalone Cutting for Frappe 16. Tablet calls use approved Factory Device IDs. Desk calls use Frappe User roles. Frappe Delete permission controls hard deletes; deleting a Cutting Record also deletes its linked history snapshots. Standard Frappe Deleted Document recovery applies. Tablet/API deletes remain soft deletes subject to the site-day rule. No .NET API compatibility routes or machine ingest."
+    "version": "0.1.31",
+    "description": "Standalone Cutting for Frappe 16. Tablet calls use approved Factory Device IDs. Desk calls use Frappe User roles. Frappe Delete permission controls hard deletes; deleting a Cutting Record also deletes its linked history snapshots. Standard Frappe Deleted Document recovery applies. Tablet/API deletes remain soft deletes subject to the site-day rule. The Cutting Summary compatibility method reads Frappe Cutting Record data. Machine ingest is not included."
   },
   "servers": [
     {
@@ -968,6 +968,132 @@
         ]
       }
     },
+    "/api/method/cutting.reporting.summary": {
+      "get": {
+        "operationId": "cutting_reporting_summary",
+        "summary": "Read .NET-compatible Cutting Summary from Frappe Cutting Record",
+        "tags": [
+          "Desk"
+        ],
+        "security": [
+          {
+            "FrappeToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "OccurredOnFrom",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "string",
+                  "format": "date-time"
+                }
+              ]
+            },
+            "description": "Inclusive site-local date; a date without time is accepted."
+          },
+          {
+            "name": "OccurredOnTo",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "string",
+                  "format": "date-time"
+                }
+              ]
+            },
+            "description": "Inclusive site-local date; a date without time is accepted."
+          },
+          {
+            "name": "CompanyCode",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "SampleCode",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "EventNo",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "DeviceName",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Summary from active Frappe Cutting Records.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CuttingSummaryApiResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing or invalid date range.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CuttingSummaryApiResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Cutting Report Reader role required; System Manager and Administrator are also allowed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CuttingSummaryApiResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "The Frappe reporting source is unavailable.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CuttingSummaryApiResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/method/cutting.reporting.admin_summary": {
       "get": {
         "operationId": "cutting_reporting_admin_summary",
@@ -1401,11 +1527,22 @@
             "description": "Active UNIQLO customers identified by exact customer code or name, ignoring case and surrounding whitespace.",
             "items": {
               "type": "object",
-              "required": ["id", "code", "name"],
+              "required": [
+                "id",
+                "code",
+                "name"
+              ],
               "properties": {
-                "id": {"type": "string", "description": "Customer.name"},
-                "code": {"type": "string"},
-                "name": {"type": "string"}
+                "id": {
+                  "type": "string",
+                  "description": "Customer.name"
+                },
+                "code": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                }
               }
             }
           },
@@ -1555,6 +1692,258 @@
             "type": "array",
             "items": {
               "type": "object"
+            }
+          }
+        }
+      },
+      "CuttingSummaryData": {
+        "type": "object",
+        "required": [
+          "metadata",
+          "columns",
+          "rows",
+          "rawRows"
+        ],
+        "properties": {
+          "metadata": {
+            "type": "object",
+            "required": [
+              "occurredOnFrom",
+              "occurredOnTo",
+              "deviceQc",
+              "deviceName",
+              "companyCode",
+              "generatedAtUtc",
+              "sourceRowCount",
+              "groupedRowCount"
+            ],
+            "properties": {
+              "occurredOnFrom": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "occurredOnTo": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "deviceQc": {
+                "type": "string"
+              },
+              "deviceName": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "companyCode": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "generatedAtUtc": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "sourceRowCount": {
+                "type": "integer"
+              },
+              "groupedRowCount": {
+                "type": "integer"
+              }
+            }
+          },
+          "columns": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "key",
+                "label"
+              ],
+              "properties": {
+                "key": {
+                  "type": "string",
+                  "enum": [
+                    "serialNo",
+                    "sampleCode",
+                    "countrySampleCode",
+                    "countryCode",
+                    "colorCode",
+                    "planCode",
+                    "startOfWeek",
+                    "quantity"
+                  ]
+                },
+                "label": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "serialNo",
+                "sampleCode",
+                "countrySampleCode",
+                "countryCode",
+                "colorCode",
+                "planCode",
+                "startOfWeek",
+                "quantity"
+              ],
+              "properties": {
+                "serialNo": {
+                  "type": "string"
+                },
+                "sampleCode": {
+                  "type": "string"
+                },
+                "countrySampleCode": {
+                  "type": "string"
+                },
+                "countryCode": {
+                  "type": "string"
+                },
+                "colorCode": {
+                  "type": "string"
+                },
+                "planCode": {
+                  "type": "string"
+                },
+                "startOfWeek": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "quantity": {
+                  "type": "integer"
+                }
+              }
+            }
+          },
+          "rawRows": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "serialNo",
+                "deviceName",
+                "operatorId",
+                "itemId",
+                "occurredOn",
+                "eventNo",
+                "companyCode",
+                "companyName",
+                "factoryCode",
+                "factoryName",
+                "productionLineCode",
+                "productionLineName",
+                "sampleCode",
+                "planCode",
+                "countryCode",
+                "colorCode",
+                "quantity"
+              ],
+              "properties": {
+                "serialNo": {
+                  "type": "string"
+                },
+                "deviceName": {
+                  "type": "string"
+                },
+                "operatorId": {
+                  "type": "string"
+                },
+                "itemId": {
+                  "type": "string"
+                },
+                "occurredOn": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "eventNo": {
+                  "type": "string"
+                },
+                "companyCode": {
+                  "type": "string"
+                },
+                "companyName": {
+                  "type": "string"
+                },
+                "factoryCode": {
+                  "type": "string"
+                },
+                "factoryName": {
+                  "type": "string"
+                },
+                "productionLineCode": {
+                  "type": "string"
+                },
+                "productionLineName": {
+                  "type": "string"
+                },
+                "sampleCode": {
+                  "type": "string"
+                },
+                "planCode": {
+                  "type": "string"
+                },
+                "countryCode": {
+                  "type": "string"
+                },
+                "colorCode": {
+                  "type": "string"
+                },
+                "quantity": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        }
+      },
+      "CuttingSummaryApiResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "code",
+          "message",
+          "data",
+          "errors"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "code": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CuttingSummaryData"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "string"
             }
           }
         }

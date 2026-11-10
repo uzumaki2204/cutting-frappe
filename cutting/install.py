@@ -10,6 +10,7 @@ REQUIRED_DOCTYPES = (
     "Production Season", "Factory Device",
 )
 ROLES = ("Cutting Manager", "Cutting Viewer")
+REPORT_ROLE = "Cutting Report Reader"
 
 
 def before_install():
@@ -19,7 +20,7 @@ def before_install():
     for doctype in REQUIRED_DOCTYPES:
         if not frappe.db.exists("DocType", doctype):
             frappe.throw(message("error.missing_doctype", doctype=doctype))
-    for role in ROLES:
+    for role in (*ROLES, REPORT_ROLE):
         if not frappe.db.exists("Role", role):
             frappe.get_doc({"doctype": "Role", "role_name": role, "desk_access": 1}).insert(ignore_permissions=True)
 

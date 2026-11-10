@@ -5,7 +5,7 @@ from datetime import date, datetime, time, timedelta, timezone
 
 import frappe
 
-from cutting.access import require_viewer
+from cutting.access import has_role, require_viewer
 from cutting.api import _data, _fail
 from cutting.i18n import message
 
@@ -58,12 +58,34 @@ JOINS = """
 """
 
 
-def _report_rows(from_date, to_date, maximum, filters):
+def _dotnet_where(filters):
+    conditions, params = _where({})
+    columns = {
+        "company_code": "c.company_code",
+        "sample_code": "p.product_code",
+        "event_no": "r.local_event_id",
+    }
+    for key, column in columns.items():
+        if filters.get(key):
+            conditions.append(f"LOWER({column}) = %({key})s")
+            params[key] = filters[key].strip().lower()
+    if filters.get("device_name"):
+        conditions.append("LOCATE(%(device_name)s, LOWER(d.device_name)) > 0")
+        params["device_name"] = filters["device_name"].strip().lower()
+    return conditions, params
+
+
+def _report_rows(from_date, to_date, maximum, filters, *, dotnet=False):
     start, end = date_range(from_date, to_date, maximum)
-    conditions, params = _where(filters)
+    conditions, params = _dotnet_where(filters) if dotnet else _where(filters)
     params["start"] = datetime.combine(start, time.min)
-    params["end"] = datetime.combine(end + timedelta(days=1), time.min)
-    conditions += ["r.occurred_at >= %(start)s", "r.occurred_at < %(end)s"]
+    conditions.append("r.occurred_at >= %(start)s")
+    if end == date.max:
+        params["end"] = datetime.max
+        conditions.append("r.occurred_at <= %(end)s")
+    else:
+        params["end"] = datetime.combine(end + timedelta(days=1), time.min)
+        conditions.append("r.occurred_at < %(end)s")
     rows = frappe.db.sql(
         f"""SELECT r.name, r.product, r.color, r.market, r.device, r.device_uid,
             r.product_code_identifier, r.quantity, r.occurred_at, r.creation,
@@ -99,6 +121,10 @@ def report_summary(from_date: str | None = None, to_date: str | None = None, fil
     require_viewer()
     selected = _data(filters, {})
     start, end, source = _report_rows(from_date, to_date, 31, selected)
+    return _summary_payload(start, end, source, selected)
+
+
+def _summary_payload(start, end, source, selected):
     raw = []
     grouped = defaultdict(int)
     for row in source:
@@ -134,6 +160,86 @@ def report_summary(from_date: str | None = None, to_date: str | None = None, fil
         "columns": [{"key": key, "label": message(label)} for key, label in columns],
         "rows": rows, "rawRows": raw,
     }
+
+
+def _summary_response(data=None, error_key=None, status=200, **values):
+    description = message(error_key, **values) if error_key else None
+    frappe.local.response["http_status_code"] = status
+    return {
+        "success": error_key is None,
+        "code": None,
+        "message": description,
+        "data": data,
+        "errors": [description] if description else [],
+    }
+
+
+def _summary_date(value):
+    return datetime.fromisoformat(str(value).strip().replace("Z", "+00:00")).date()
+
+
+def _display_filter(value):
+    if value is None:
+        return None
+    return str(value).strip() or None
+
+
+@frappe.whitelist(allow_guest=True, methods=["GET"])
+def summary(OccurredOnFrom=None, OccurredOnTo=None, CompanyCode=None, SampleCode=None,
+            EventNo=None, DeviceName=None):
+    """Expose the .NET Cutting Summary contract from Frappe Cutting records."""
+    if not has_role("Cutting Report Reader"):
+        return _summary_response(error_key="error.permission", status=403)
+    if not OccurredOnFrom or not OccurredOnTo:
+        return _summary_response(error_key="report.summary_range_required", status=400)
+    try:
+        start = _summary_date(OccurredOnFrom)
+        end = _summary_date(OccurredOnTo)
+    except (TypeError, ValueError):
+        return _summary_response(error_key="error.input", status=400)
+    if start > end:
+        start, end = end, start
+    if (end - start).days >= 31:
+        return _summary_response(error_key="report.summary_range_too_long", status=400, days=31)
+
+    selected = {
+        "company_code": _display_filter(CompanyCode),
+        "sample_code": _display_filter(SampleCode),
+        "event_no": _display_filter(EventNo),
+        "device_name": _display_filter(DeviceName),
+    }
+    try:
+        _, _, source = _report_rows(start.isoformat(), end.isoformat(), 31, selected, dotnet=True)
+        report = _summary_payload(start, end, source, selected)
+    except Exception:
+        try:
+            frappe.log_error(frappe.get_traceback(), title=message("error.report_unavailable"))
+        except Exception:
+            pass
+        return _summary_response(error_key="error.report_unavailable", status=500)
+
+    report["metadata"].update({
+        "occurredOnFrom": start.isoformat() + "T00:00:00",
+        "occurredOnTo": end.isoformat() + "T00:00:00",
+        "deviceQc": "CUTTING",
+        "generatedAtUtc": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+    })
+    report["columns"] = [
+        {"key": key, "label": message("report.summary_column_" + key)}
+        for key in ("serialNo", "sampleCode", "countrySampleCode", "countryCode",
+                    "colorCode", "planCode", "startOfWeek", "quantity")
+    ]
+    report["rows"].sort(key=lambda row: (
+        row["sampleCode"], row["countryCode"], row["colorCode"], row["planCode"],
+        row["serialNo"], row["startOfWeek"],
+    ))
+    for row in report["rows"]:
+        row["startOfWeek"] += "T00:00:00"
+    for row in report["rawRows"]:
+        occurred = row["occurredOn"]
+        row["occurredOn"] = (occurred if isinstance(occurred, datetime)
+                             else datetime.fromisoformat(str(occurred))).isoformat()
+    return _summary_response(data=report)
 
 
 @frappe.whitelist(methods=["GET"])

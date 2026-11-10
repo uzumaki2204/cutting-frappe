@@ -8,7 +8,7 @@ App độc lập `cutting`, dùng chung master và Factory Device từ `factory_
 - Trong Pilot, thêm repo public `https://github.com/uzumaki2204/cutting-frappe`, chọn nhánh `version-16`, tên app `cutting`, rồi cài vào site đích.
 - Nếu đã có Web Page hoặc Builder Page xuất bản tại `/cutting`, lưu bản sao và tắt xuất bản trang cũ trước. Installer báo xung đột thay vì sửa nội dung trang có sẵn.
 - Chạy migrate và build assets theo quy trình Pilot, sau đó khởi động lại workload. Sao lưu database và public/private files trước khi cài/nâng cấp.
-- Gán `Cutting Manager` cho người quản lý hoặc `Cutting Viewer` cho người chỉ xem báo cáo. App cấp quyền Select master cho hai role này; quyền sửa master tiếp tục do app Factory Management quản lý.
+- Gán `Cutting Manager` cho người quản lý hoặc `Cutting Viewer` cho người xem báo cáo Desk. Gán `Cutting Report Reader` cho User/API token cần gọi API Summary tương thích .NET. App cấp quyền Select master cho Manager và Viewer; quyền sửa master tiếp tục do app Factory Management quản lý.
 - `Cutting Manager` được tạo và xử lý Data Import do chính mình sở hữu; Frappe tiếp tục kiểm tra quyền import của DocType đích.
 
 Với Bench thông thường:
@@ -45,7 +45,7 @@ Trong List **Cutting Record**, dùng nút **Thùng rác** để lọc bản ghi 
 
 ## API và ngôn ngữ
 
-Hợp đồng API chuẩn nằm trong `docs/openapi.json`; collection Postman được sinh từ hợp đồng này và bổ sung assertion. Mọi method trả envelope Frappe `message`. API report và manager dùng quyền của User đăng nhập hoặc User sở hữu API key. Tablet dùng Factory Device đã duyệt, không dùng User token.
+Hợp đồng API chuẩn nằm trong `docs/openapi.json`; collection Postman được sinh từ hợp đồng này và bổ sung assertion. Các method hiện có trả envelope Frappe `message`. `GET /api/method/cutting.reporting.summary` nhận `OccurredOnFrom`, `OccurredOnTo`, `CompanyCode`, `SampleCode`, `EventNo`, `DeviceName` và trả trực tiếp envelope .NET `success/code/message/data/errors`. Method này chỉ đọc `Cutting Record` cùng master trên Frappe; kết quả gồm `metadata`, `columns`, `rows`, `rawRows`. Nó yêu cầu `Cutting Report Reader`, System Manager hoặc Administrator. API report và manager dùng quyền của User đăng nhập hoặc User sở hữu API key. Tablet dùng Factory Device đã duyệt, không dùng User token.
 
 Catalog UTF-8 Việt/Anh dùng chung frontend/backend là `cutting/i18n.json`; nhãn DocType dùng `cutting/translations/*.csv`. Repo không chứa credential hoặc địa chỉ riêng của site.
 
@@ -63,4 +63,4 @@ bench --site <test-site> run-tests --app cutting
 
 Chạy integration test trên site riêng đã cài `factory_management` và `cutting`. Test tạo master/thiết bị tạm trong transaction của test framework. Không chạy bộ test này trên site đang vận hành.
 
-Source chuẩn tại `integrations/frappe/cutting` trong repo FactoryManagement. Khi phát hành, đồng bộ đúng nội dung thư mục app vào repo riêng, tăng phiên bản trong `pyproject.toml`, `cutting/__init__.py`, manifest và OpenAPI, commit rồi push nhánh `version-16`/tag tương ứng. Bản 0.1.30 yêu cầu Factory Management tối thiểu 0.1.40. Trên tablet, trang Cutting chiếm vừa chiều cao màn hình và chỉ vùng danh sách bản ghi cuộn dọc; bảng giữ tiêu đề khi cuộn. Popup cài đặt, xác nhận xóa cache và xác nhận xóa bản ghi đều hiển thị phía trên khi trang đang ở chế độ toàn màn hình; thao tác tablet chỉ sửa hoặc xóa mềm bản ghi có ngày phát sinh hôm nay theo giờ site. Xóa cứng từ Desk tuân theo quyền `Delete` của Frappe. Cài mới tạo schema trống; người dùng tự import dữ liệu nghiệp vụ sau.
+Source chuẩn tại `integrations/frappe/cutting` trong repo FactoryManagement. Khi phát hành, đồng bộ đúng nội dung thư mục app vào repo riêng, tăng phiên bản trong `pyproject.toml`, `cutting/__init__.py`, manifest và OpenAPI, commit rồi push nhánh `version-16`/tag tương ứng. Bản 0.1.31 yêu cầu Factory Management tối thiểu 0.1.40. Trên tablet, trang Cutting chiếm vừa chiều cao màn hình và chỉ vùng danh sách bản ghi cuộn dọc; bảng giữ tiêu đề khi cuộn. Popup cài đặt, xác nhận xóa cache và xác nhận xóa bản ghi đều hiển thị phía trên khi trang đang ở chế độ toàn màn hình; thao tác tablet chỉ sửa hoặc xóa mềm bản ghi có ngày phát sinh hôm nay theo giờ site. Xóa cứng từ Desk tuân theo quyền `Delete` của Frappe. Cài mới tạo schema trống; người dùng tự import dữ liệu nghiệp vụ sau.
