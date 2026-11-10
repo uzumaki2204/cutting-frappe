@@ -317,6 +317,31 @@ class TestCutting(IntegrationTestCase):
         direct_summary_response(legacy, SimpleNamespace(path="/api/method/cutting.reporting.report_summary"))
         self.assertEqual(legacy.get_json(), body)
 
+    def test_dotnet_summary_catalog_appears_in_desk_swagger(self):
+        from cutting.api_docs import ENDPOINT_TYPE, OPERATION_ID, SERVICE_TYPE, SUMMARY_PATH, ensure_catalog
+        from factory_management import api_docs
+
+        ensure_catalog()
+        ensure_catalog()
+        self.assertEqual(frappe.db.count(SERVICE_TYPE, {"service_key": "cutting"}), 1)
+        self.assertEqual(frappe.db.count(ENDPOINT_TYPE, {"operation_id": OPERATION_ID}), 1)
+        endpoint_name = frappe.db.get_value(ENDPOINT_TYPE, {"operation_id": OPERATION_ID}, "name")
+        endpoint = frappe.get_doc(ENDPOINT_TYPE, endpoint_name)
+        self.assertEqual(endpoint.path, SUMMARY_PATH)
+        self.assertEqual({row.role for row in endpoint.allowed_roles}, {"Cutting Report Reader", "System Manager"})
+
+        with patch.object(api_docs, "_manager_only"):
+            self.assertIn("cutting", {item["key"] for item in api_docs.services()})
+            operation = api_docs.openapi("cutting")["paths"][SUMMARY_PATH]["get"]
+        self.assertEqual(operation["operationId"], OPERATION_ID)
+        self.assertEqual([item["name"] for item in operation["parameters"]], [
+            "OccurredOnFrom", "OccurredOnTo", "CompanyCode", "SampleCode", "EventNo", "DeviceName",
+        ])
+        schema = operation["responses"]["200"]["content"]["application/json"]["schema"]
+        self.assertIn("data", schema["properties"])
+        report = schema["properties"]["data"]["anyOf"][0]
+        self.assertIn("countrySampleCode", report["properties"]["columns"]["items"]["properties"]["key"]["enum"])
+
     def test_migration_maps_legacy_color_references_by_color_code(self):
         from cutting.patches.migrate_cutting_colors_to_product_color import execute
 

@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Cutting API",
-    "version": "0.1.31",
+    "version": "0.1.32",
     "description": "Standalone Cutting for Frappe 16. Tablet calls use approved Factory Device IDs. Desk calls use Frappe User roles. Frappe Delete permission controls hard deletes; deleting a Cutting Record also deletes its linked history snapshots. Standard Frappe Deleted Document recovery applies. Tablet/API deletes remain soft deletes subject to the site-day rule. The Cutting Summary compatibility method reads Frappe Cutting Record data. Machine ingest is not included."
   },
   "servers": [

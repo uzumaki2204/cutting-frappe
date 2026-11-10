@@ -31,6 +31,7 @@ def after_install():
 
 def after_migrate():
     import frappe.permissions
+    from cutting.api_docs import ensure_catalog
 
     for doctype in REQUIRED_DOCTYPES:
         frappe.permissions.setup_custom_perms(doctype)
@@ -49,4 +50,5 @@ def after_migrate():
             "role": "Cutting Manager", "permlevel": 0, "if_owner": 1,
             "read": 1, "create": 1, "write": 1,
         }).insert(ignore_permissions=True)
+    ensure_catalog()
     frappe.clear_cache()

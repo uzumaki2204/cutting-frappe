@@ -4,3 +4,16 @@ Cutting Manager,Cutting Manager
 Cutting Viewer,Cutting Viewer
 Cutting Report Reader,Cutting Report Reader
 Cutting Reports,Cutting Reports
+CUTTING_API_TITLE,Cutting API
+CUTTING_API_DESCRIPTION,Cutting API documentation managed in Frappe Desk.
+CUTTING_SUMMARY_TITLE,Cutting Summary compatible with .NET
+CUTTING_SUMMARY_DESCRIPTION,Aggregate active Cutting Records by device and Monday-based week for at most 31 days.
+CUTTING_SUMMARY_DATE_DESCRIPTION,Site-local occurrence date; accepts a date or datetime and normalizes reversed bounds.
+CUTTING_SUMMARY_FILTER_COMPANYCODE,Exact case-insensitive company code filter.
+CUTTING_SUMMARY_FILTER_SAMPLECODE,Exact case-insensitive product code filter.
+CUTTING_SUMMARY_FILTER_EVENTNO,Exact case-insensitive local event ID filter.
+CUTTING_SUMMARY_FILTER_DEVICENAME,Case-insensitive device name substring filter.
+CUTTING_SUMMARY_RESPONSE_200,.NET envelope with metadata and report rows from Frappe Cutting Records.
+CUTTING_SUMMARY_RESPONSE_400,Missing or invalid date range.
+CUTTING_SUMMARY_RESPONSE_403,Cutting Report Reader role required; System Manager and Administrator are also allowed.
+CUTTING_SUMMARY_RESPONSE_500,The Frappe Cutting reporting source is unavailable.

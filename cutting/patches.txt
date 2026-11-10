@@ -2,3 +2,4 @@
 cutting.patches.migrate_cutting_colors_to_product_color
 
 [post_model_sync]
+cutting.patches.add_summary_api_docs

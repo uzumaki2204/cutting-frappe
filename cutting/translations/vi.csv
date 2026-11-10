@@ -4,6 +4,19 @@ Cutting Manager,Quản lý Cutting
 Cutting Viewer,Xem Cutting
 Cutting Report Reader,Đọc báo cáo Cutting
 Cutting Reports,Báo cáo Cutting
+CUTTING_API_TITLE,API Cutting
+CUTTING_API_DESCRIPTION,Tài liệu API Cutting được quản lý trong Frappe Desk.
+CUTTING_SUMMARY_TITLE,Báo cáo Cutting Summary tương thích .NET
+CUTTING_SUMMARY_DESCRIPTION,Tổng hợp Cutting Record đang hoạt động theo thiết bị và tuần bắt đầu thứ Hai trong tối đa 31 ngày.
+CUTTING_SUMMARY_DATE_DESCRIPTION,Ngày phát sinh theo múi giờ site; cho phép ngày hoặc ngày giờ và tự đảo khoảng ngày nhập ngược.
+CUTTING_SUMMARY_FILTER_COMPANYCODE,Lọc chính xác mã công ty và không phân biệt chữ hoa chữ thường.
+CUTTING_SUMMARY_FILTER_SAMPLECODE,Lọc chính xác mã hàng và không phân biệt chữ hoa chữ thường.
+CUTTING_SUMMARY_FILTER_EVENTNO,Lọc chính xác mã sự kiện cục bộ và không phân biệt chữ hoa chữ thường.
+CUTTING_SUMMARY_FILTER_DEVICENAME,Lọc tên thiết bị có chứa chuỗi và không phân biệt chữ hoa chữ thường.
+CUTTING_SUMMARY_RESPONSE_200,Envelope .NET chứa metadata và các dòng báo cáo từ Cutting Record trong Frappe.
+CUTTING_SUMMARY_RESPONSE_400,Thiếu ngày hoặc khoảng ngày không hợp lệ.
+CUTTING_SUMMARY_RESPONSE_403,Cần role Cutting Report Reader; System Manager và Administrator cũng được phép.
+CUTTING_SUMMARY_RESPONSE_500,Không thể đọc nguồn báo cáo Cutting trong Frappe.
 Product,Sản phẩm
 Color,Màu
 Market,Thị trường
