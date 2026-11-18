@@ -58,8 +58,7 @@
       "fieldtype": "Datetime",
       "reqd": 1,
       "in_list_view": 1,
-      "in_standard_filter": 1,
-      "read_only_depends_on": "eval:!doc.__islocal"
+      "in_standard_filter": 1
     },
     {
       "fieldname": "company",
@@ -73,22 +72,20 @@
       "label": "Factory Device",
       "fieldtype": "Link",
       "options": "Factory Device",
-      "in_standard_filter": 1,
-      "read_only_depends_on": "eval:!doc.__islocal"
+      "in_standard_filter": 1
     },
     {
       "fieldname": "device_uid",
       "label": "Device UID",
       "fieldtype": "Data",
       "length": 100,
-      "read_only_depends_on": "eval:!doc.__islocal"
+      "read_only": 1
     },
     {
       "fieldname": "local_event_id",
       "label": "Local Event ID",
       "fieldtype": "Data",
-      "length": 100,
-      "read_only_depends_on": "eval:!doc.__islocal"
+      "length": 100
     },
     {
       "fieldname": "event_uid",
@@ -107,8 +104,7 @@
       "options": "Cutting\nImport",
       "default": "Import",
       "reqd": 1,
-      "in_standard_filter": 1,
-      "read_only_depends_on": "eval:!doc.__islocal"
+      "in_standard_filter": 1
     },
     {
       "fieldname": "is_deleted",

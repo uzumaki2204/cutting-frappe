@@ -32,6 +32,7 @@ def after_install():
 def after_migrate():
     import frappe.permissions
     from cutting.api_docs import ensure_catalog
+    from cutting.patches.allow_manager_historical_edits import ensure_history_identity_index
 
     for doctype in REQUIRED_DOCTYPES:
         frappe.permissions.setup_custom_perms(doctype)
@@ -51,4 +52,5 @@ def after_migrate():
             "read": 1, "create": 1, "write": 1,
         }).insert(ignore_permissions=True)
     ensure_catalog()
+    ensure_history_identity_index()
     frappe.clear_cache()

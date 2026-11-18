@@ -7,7 +7,10 @@ from datetime import datetime, timezone
 import frappe
 
 from cutting.access import require_manager, require_viewer
-from cutting.cutting.doctype.cutting_record.cutting_record import event_uid
+from cutting.cutting.doctype.cutting_record.cutting_record import (
+    _site_local_date,
+    identity_record_names,
+)
 from cutting.timeutils import site_now, site_zone as _zone, site_to_utc, utc_to_site
 from cutting.i18n import catalog, message
 from cutting import devices
@@ -114,15 +117,18 @@ def _selection(item):
 
 
 def _record_for_device(device, local_event_id):
-    name = frappe.db.get_value("Cutting Record", {"event_uid": event_uid(device.name, local_event_id)}, "name")
+    names = identity_record_names(device.name, local_event_id)
+    if len(names) > 1:
+        _fail("error.duplicate_conflict")
+    name = next(iter(names), None)
     if not name and frappe.db.exists("Cutting Record", local_event_id):
-        name = local_event_id
+        candidate = frappe.get_doc("Cutting Record", local_event_id)
+        if candidate.device != device.name:
+            _fail("error.record_owner", frappe.PermissionError)
+        name = candidate.name
     if not name:
         _fail("error.record_missing", frappe.DoesNotExistError)
-    record = frappe.get_doc("Cutting Record", name)
-    if record.device != device.name:
-        _fail("error.record_owner", frappe.PermissionError)
-    return record
+    return frappe.get_doc("Cutting Record", name)
 
 
 def _option(row, code, title, **extra):
@@ -225,8 +231,10 @@ def _sync_records(id, records, updates, deletes):
     for item in creates:
         local_id = _event_id(item)
         values = _selection(item)
-        uid = event_uid(device.name, local_id)
-        existing_name = frappe.db.get_value("Cutting Record", {"event_uid": uid}, "name")
+        names = identity_record_names(device.name, local_id)
+        if len(names) > 1:
+            _fail("error.duplicate_conflict")
+        existing_name = next(iter(names), None)
         if not existing_name:
             frappe.get_doc({
                 "doctype": "Cutting Record", **values,
@@ -243,6 +251,8 @@ def _sync_records(id, records, updates, deletes):
         record = _record_for_device(device, local_id)
         if record.is_deleted:
             _fail("error.restore_first")
+        if _site_local_date(record.occurred_at) != site_now().date():
+            _fail("error.edit_today_only")
         record.update(_selection(item))
         record.flags.cutting_validate_active = True
         record.save(ignore_permissions=True)
@@ -271,14 +281,34 @@ def _sync_records(id, records, updates, deletes):
 @frappe.whitelist(allow_guest=True, methods=["GET"])
 def get_device_records(id: str | None = None):
     device = _device(id)
-    fields = ["name", "product", "color", "market", "product_code_identifier", "quantity", "local_event_id", "occurred_at", "creation"]
-    rows = frappe.get_all(
-        "Cutting Record", fields=fields,
-        filters=[["device", "=", device.name], ["is_deleted", "=", 0]],
-        order_by="occurred_at desc", limit_page_length=200,
+    rows = frappe.db.sql(
+        """SELECT r.name, r.product, r.color, r.market, r.product_code_identifier,
+                  r.quantity, r.occurred_at, r.creation,
+                  COALESCE(
+                      (SELECT h.local_event_id FROM `tabCutting History` h
+                       WHERE h.cutting_record = r.name AND h.device = %s
+                         AND h.local_event_id IS NOT NULL AND h.local_event_id != ''
+                       ORDER BY h.creation, h.name LIMIT 1),
+                      r.local_event_id, r.name
+                  ) AS local_event_id
+           FROM `tabCutting Record` r
+           WHERE r.is_deleted = 0 AND (
+               r.device = %s OR EXISTS (
+                   SELECT 1 FROM `tabCutting History` h
+                   WHERE h.cutting_record = r.name AND h.device = %s
+                     AND h.local_event_id IS NOT NULL AND h.local_event_id != ''
+               )
+           )
+           ORDER BY r.occurred_at DESC LIMIT 200""",
+        (device.name, device.name, device.name),
+        as_dict=True,
     )
+    seen_ids = set()
     for row in rows:
-        row.local_event_id = row.local_event_id or row.name
+        key = str(row.local_event_id).casefold()
+        if key in seen_ids:
+            _fail("error.duplicate_conflict")
+        seen_ids.add(key)
         row.occurred_at = site_to_utc(row.occurred_at)
     return rows
 

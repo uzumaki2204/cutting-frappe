@@ -6,6 +6,7 @@ from datetime import datetime
 import frappe
 from frappe.model.document import Document
 
+from cutting.access import has_role
 from cutting.i18n import message
 from cutting.timeutils import site_now, site_zone
 
@@ -34,6 +35,21 @@ def event_uid(device, local_event_id):
     if not device or not local_event_id:
         return None
     return hashlib.sha256(f"{device}|{str(local_event_id).casefold()}".encode("utf-8")).hexdigest()
+
+
+def identity_record_names(device, local_event_id):
+    if not device or not local_event_id:
+        return set()
+    current = frappe.db.get_value(
+        "Cutting Record", {"event_uid": event_uid(device, local_event_id)}, "name"
+    )
+    historical = frappe.db.sql(
+        """SELECT DISTINCT cutting_record FROM `tabCutting History`
+           WHERE device = %s AND LOWER(local_event_id) = %s""",
+        (device, str(local_event_id).casefold()),
+        as_list=True,
+    )
+    return ({current} if current else set()) | {row[0] for row in historical}
 
 
 def _exists(doctype, name):
@@ -70,6 +86,7 @@ def write_history(doc, action):
 
 class CuttingRecord(Document):
     def validate(self):
+        previous = self.get_doc_before_save()
         self.product_code_identifier = str(self.product_code_identifier or "").strip()
         if not self.product_code_identifier or len(self.product_code_identifier) > 100:
             _fail("error.identifier")
@@ -102,11 +119,21 @@ class CuttingRecord(Document):
             if self.company and device_company and self.company != device_company:
                 _fail("error.device_company")
             self.company = device_company or self.company
-            self.device_uid = self.device_uid or self.device
+        if not previous:
+            self.device_uid = self.device or self.device_uid
+        elif previous.device != self.device:
+            self.device_uid = self.device or None
+        else:
+            self.device_uid = previous.device_uid
         self.event_uid = event_uid(self.device, self.local_event_id)
-        previous = self.get_doc_before_save()
+        if identity_record_names(self.device, self.local_event_id) - {self.name}:
+            _fail("error.duplicate_conflict")
         if previous:
-            if any((previous.get(field) or None) != (self.get(field) or None) for field in IDENTITY_FIELDS):
+            identity_changed = any(
+                (previous.get(field) or None) != (self.get(field) or None)
+                for field in IDENTITY_FIELDS
+            )
+            if identity_changed and not has_role("Cutting Manager"):
                 _fail("error.immutable")
             state_changed = bool(previous.is_deleted) != bool(self.is_deleted)
             if state_changed and not self.flags.get("cutting_state_action"):
@@ -115,10 +142,10 @@ class CuttingRecord(Document):
                 _fail("error.delete_today_only")
             if previous.is_deleted and not state_changed:
                 _fail("error.restore_first")
-            content_changed = any((previous.get(field) or None) != (self.get(field) or None) for field in EDITABLE_FIELDS)
-            if content_changed and _site_local_date(previous.occurred_at) != site_now().date():
-                _fail("error.edit_today_only")
-        if (self.source == "Cutting" or self.flags.get("cutting_validate_active")) and not self.flags.get("cutting_state_action"):
+        must_validate_active = self.flags.get("cutting_validate_active") or (
+            self.source == "Cutting" and (not previous or previous.source != "Cutting")
+        )
+        if must_validate_active and not self.flags.get("cutting_state_action"):
             if not self.device:
                 _fail("error.device_missing")
             if not all(_active(doctype, value) for doctype, value in (
@@ -137,7 +164,7 @@ class CuttingRecord(Document):
             return
         if bool(previous.is_deleted) != bool(self.is_deleted):
             action = "Delete" if self.is_deleted else "Restore"
-        elif any(previous.get(field) != self.get(field) for field in EDITABLE_FIELDS):
+        elif any(previous.get(field) != self.get(field) for field in (*EDITABLE_FIELDS, *IDENTITY_FIELDS)):
             action = "Update"
         else:
             return

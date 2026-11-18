@@ -152,16 +152,93 @@ class TestCutting(IntegrationTestCase):
 
             self.assertEqual(self.record(item["local_event_id"]).quantity, item["quantity"])
 
-    def test_direct_save_rejects_editing_a_historical_record(self):
+    def test_manager_can_edit_a_historical_record(self):
         item = self.item_for_site_day("desk-old-record", days_from_today=-1)
         api.sync_records(self.device.name, [item])
         record = self.record(item["local_event_id"])
         record.quantity = 20
-
-        with self.assertRaises(frappe.ValidationError):
+        self.product.is_active = 0
+        self.product.save()
+        email = "cutting-manager-" + uuid.uuid4().hex[:10] + "@example.invalid"
+        user_values = {
+            "doctype": "User", "email": email, "first_name": "Cutting Manager",
+            "send_welcome_email": 0, "user_type": "System User",
+            "roles": [{"role": "Cutting Manager"}],
+        }
+        if frappe.get_meta("User").has_field("company"):
+            user_values["company"] = self.company.name
+        frappe.get_doc(user_values).insert()
+        try:
+            frappe.set_user(email)
             record.save()
+        finally:
+            frappe.set_user("Administrator")
 
-        self.assertEqual(self.record(item["local_event_id"]).quantity, item["quantity"])
+        self.assertEqual(self.record(item["local_event_id"]).quantity, 20)
+        self.assertEqual(
+            frappe.db.get_value("Cutting History", {"cutting_record": record.name, "action": "Update"}, "quantity"),
+            20,
+        )
+
+    def test_manager_identity_edit_keeps_tablet_history_key(self):
+        item = self.item_for_site_day("original-id")
+        api.sync_records(self.device.name, [item])
+        record = self.record("original-id")
+        original_name = record.name
+        other_id = str(uuid.uuid4())
+        device_values = {
+            "doctype": "Factory Device", "name": other_id, "device_name": "CUT-" + other_id[:10],
+            "company": self.company.name, "status": "Approved", "is_active": 1,
+        }
+        for field in ("device_id", "device_uid"):
+            if frappe.get_meta("Factory Device").has_field(field):
+                device_values[field] = other_id
+        other_device = frappe.get_doc(device_values).insert(set_name=other_id)
+
+        record.local_event_id = "guest-id"
+        try:
+            frappe.set_user("Guest")
+            with self.assertRaises(frappe.ValidationError):
+                record.save(ignore_permissions=True)
+        finally:
+            frappe.set_user("Administrator")
+        record.device = other_device.name
+        record.local_event_id = "renamed-id"
+        record.source = "Import"
+        record.quantity = 15
+        record.save()
+
+        updated = frappe.get_doc("Cutting Record", original_name)
+        self.assertEqual(updated.event_uid, event_uid(other_device.name, "renamed-id"))
+        self.assertEqual(updated.device_uid, other_device.name)
+        self.assertEqual(updated.source, "Import")
+        self.assertEqual(api.get_device_records(self.device.name)[0].local_event_id, "original-id")
+        self.assertEqual(api.get_device_records(other_device.name)[0].local_event_id, "renamed-id")
+        self.assertEqual(
+            frappe.db.get_value("Cutting History", {"cutting_record": original_name, "action": "Update"}, "local_event_id"),
+            "renamed-id",
+        )
+
+        response = api.sync_records(self.device.name, updates=[{**item, "quantity": 22}])
+        self.assertEqual(response["accepted_update_local_event_ids"], ["original-id"])
+        self.assertEqual(frappe.db.get_value("Cutting Record", original_name, "quantity"), 22)
+        replay = api.sync_records(self.device.name, records=[item])
+        self.assertEqual(replay["accepted_local_event_ids"], ["original-id"])
+        self.assertEqual(frappe.db.count("Cutting Record", {"name": original_name}), 1)
+
+        updated = frappe.get_doc("Cutting Record", original_name)
+        updated.occurred_at = site_now() - timedelta(days=1)
+        updated.save()
+        with self.assertRaises(frappe.ValidationError):
+            api.sync_records(self.device.name, updates=[{**item, "quantity": 23}])
+        self.assertEqual(frappe.db.get_value("Cutting Record", original_name, "quantity"), 22)
+
+        second = self.item_for_site_day("second-id")
+        api.sync_records(self.device.name, [second])
+        second_record = self.record("second-id")
+        second_record.local_event_id = "original-id"
+        with self.assertRaises(frappe.ValidationError):
+            second_record.save()
 
     def test_invalid_batch_rolls_back_all_records_and_history(self):
         with self.assertRaises(frappe.ValidationError):
