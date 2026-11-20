@@ -7,7 +7,7 @@ from cutting.i18n import message
 
 REQUIRED_DOCTYPES = (
     "Company", "Product", "Product Variant", "Product Color", "Market",
-    "Production Season", "Factory Device",
+    "Production Season", "Factory Device", "Trim", "Trim Item",
 )
 ROLES = ("Cutting Manager", "Cutting Viewer")
 REPORT_ROLE = "Cutting Report Reader"

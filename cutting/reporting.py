@@ -2,6 +2,7 @@
 
 from collections import defaultdict
 from datetime import date, datetime, time, timedelta, timezone
+from decimal import Decimal
 
 import frappe
 
@@ -109,10 +110,61 @@ def _report_rows(from_date, to_date, maximum, filters, *, dotnet=False):
     return start, end, rows
 
 
+def _trim_key(plan, sample, color):
+    return tuple(str(value or "").strip().casefold() for value in (plan, sample, color))
+
+
+def _trim_order_quantities(keys):
+    unique = {}
+    for key in keys:
+        values = tuple(str(value or "").strip() for value in key)
+        if all(values):
+            unique.setdefault(_trim_key(*values), values)
+    keys = list(unique.values())
+    totals = {}
+    for offset in range(0, len(keys), 200):
+        batch = keys[offset:offset + 200]
+        placeholders = ", ".join(["(%s, %s, %s)"] * len(batch))
+        values = [value for key in batch for value in key]
+        rows = frappe.db.sql(
+            """SELECT i.order_plan_number, i.sample_code, i.color_code,
+                      SUM(i.order_qty) AS total
+                 FROM `tabTrim Item` i
+                 INNER JOIN `tabTrim` t ON t.name = i.parent
+                 WHERE i.parenttype = 'Trim'
+                   AND COALESCE(t.document_status, '') != %s
+                   AND (i.order_plan_number, i.sample_code, i.color_code) IN ("""
+            + placeholders + ") GROUP BY i.order_plan_number, i.sample_code, i.color_code",
+            ["Cancel", *values], as_dict=True,
+        )
+        for row in rows:
+            key = _trim_key(row.order_plan_number, row.sample_code, row.color_code)
+            totals[key] = int(row.total or 0)
+    return totals
+
+
+def _cutting_rates(products):
+    products = sorted(set(products))
+    rates = {}
+    for offset in range(0, len(products), 200):
+        batch = products[offset:offset + 200]
+        for row in frappe.get_all(
+            "Cutting Standard", filters={"product": ["in", batch]},
+            fields=["product", "rate_m_per_piece"], limit=len(batch),
+        ):
+            rates[row.product] = Decimal(str(row.rate_m_per_piece))
+    return rates
+
+
 @frappe.whitelist(methods=["GET"])
 def report_detail(from_date: str | None = None, to_date: str | None = None, filters: dict | str | None = None):
     require_viewer()
     _, _, rows = _report_rows(from_date, to_date, 7, _data(filters, {}))
+    totals = _trim_order_quantities((row.product_code_identifier, row.product_code,
+                                    row.color_code) for row in rows)
+    for row in rows:
+        key = _trim_key(row.product_code_identifier, row.product_code, row.color_code)
+        row["sum_order_qty"] = totals.get(key, 0)
     return rows
 
 
@@ -121,10 +173,22 @@ def report_summary(from_date: str | None = None, to_date: str | None = None, fil
     require_viewer()
     selected = _data(filters, {})
     start, end, source = _report_rows(from_date, to_date, 31, selected)
-    return _summary_payload(start, end, source, selected)
+    report = _summary_payload(start, end, source, selected, group_by_product=True)
+    totals = _trim_order_quantities((row["planCode"], row["sampleCode"], row["colorCode"])
+                                    for row in report["rows"])
+    rates = _cutting_rates(row["_product"] for row in report["rows"])
+    for row in report["rows"]:
+        key = _trim_key(row["planCode"], row["sampleCode"], row["colorCode"])
+        row["sumOrderQty"] = totals.get(key, 0)
+        rate = rates.get(row.pop("_product"))
+        row["cuttingQtyM"] = (float(Decimal(row["quantity"]) * rate)
+                              if rate is not None else None)
+    report["columns"].append({"key": "sumOrderQty", "label": message("ui.sum_order_qty")})
+    report["columns"].append({"key": "cuttingQtyM", "label": message("ui.cutting_qty_m")})
+    return report
 
 
-def _summary_payload(start, end, source, selected):
+def _summary_payload(start, end, source, selected, *, group_by_product=False):
     raw = []
     grouped = defaultdict(int)
     for row in source:
@@ -133,7 +197,9 @@ def _summary_payload(start, end, source, selected):
             occurred = datetime.fromisoformat(occurred)
         local_day = occurred.date()
         monday = local_day - timedelta(days=local_day.weekday())
-        key = (row.device_name, row.product_code, row.market_code, row.color_code, row.product_code_identifier, monday.isoformat())
+        key = (row.device_name, row.product_code, row.market_code, row.color_code,
+               row.product_code_identifier, monday.isoformat(),
+               row.product if group_by_product else "")
         grouped[key] += row.quantity
         raw.append({
             "serialNo": row.device_name, "deviceName": row.device_name,
@@ -149,6 +215,7 @@ def _summary_payload(start, end, source, selected):
         "serialNo": key[0], "sampleCode": key[1], "countrySampleCode": key[2] + key[1],
         "countryCode": key[2], "colorCode": key[3], "planCode": key[4],
         "startOfWeek": key[5], "quantity": quantity,
+        **({"_product": key[6]} if group_by_product else {}),
     } for key, quantity in sorted(grouped.items(), key=lambda item: item[0][1:])]
     columns = [("serialNo", "ui.device"), ("sampleCode", "ui.product"), ("countryCode", "ui.market"), ("colorCode", "ui.color"), ("planCode", "ui.plan"), ("startOfWeek", "ui.date"), ("quantity", "ui.quantity")]
     return {

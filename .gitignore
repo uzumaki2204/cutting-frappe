@@ -5,6 +5,7 @@ build/
 dist/
 .pytest_cache/
 test-results/
+graphify-out/
 .env
 *.environment.yaml
 !postman/environments/example.environment.yaml

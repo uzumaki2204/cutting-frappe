@@ -6,8 +6,6 @@ frappe.pages["cutting-reports"].on_page_load = function (wrapper) {
       controls[fieldname] = page.add_field({ fieldname, label: t(label), fieldtype, options, default: value });
       controls[fieldname].$input?.attr("aria-label", t(label));
     };
-    add("mode", "ui.mode", "Select", [t("ui.summary"), t("ui.detail"), t("ui.admin_summary")].join("\n"), t("ui.summary"));
-    add("group_by", "ui.group_by", "Select", [t("ui.date"), t("ui.product"), t("ui.color"), t("ui.market")].join("\n"), t("ui.date"));
     add("from_date", "ui.from", "Date", null, frappe.datetime.get_today());
     add("to_date", "ui.to", "Date", null, frappe.datetime.get_today());
     add("company", "ui.company", "Link", "Company");
@@ -39,31 +37,10 @@ frappe.pages["cutting-reports"].on_page_load = function (wrapper) {
     async function refresh() {
       body.textContent = t("ui.loading");
       const filters = Object.fromEntries(["company", "device", "product", "color", "market"].map((key) => [key, controls[key].get_value()]).filter(([, value]) => value));
-      const mode = controls.mode.get_value();
       const args = { filters, from_date: controls.from_date.get_value(), to_date: controls.to_date.get_value() };
-      let method = "cutting.reporting.report_summary";
-      if (mode === t("ui.detail")) method = "cutting.reporting.report_detail";
-      if (mode === t("ui.admin_summary")) {
-        method = "cutting.reporting.admin_summary";
-        args.created_from = args.from_date; args.created_to = args.to_date;
-        delete args.from_date; delete args.to_date;
-      }
       try {
-        const response = await frappe.call({ method, args, type: "GET" });
-        const data = response.message;
-        if (mode === t("ui.detail")) {
-          table([
-            { key: "occurred_at", label: t("ui.date") }, { key: "company_code", label: t("ui.company") },
-            { key: "device_name", label: t("ui.device") }, { key: "product_code", label: t("ui.product") },
-            { key: "market_code", label: t("ui.market") }, { key: "color_code", label: t("ui.color") },
-            { key: "product_code_identifier", label: t("ui.plan") }, { key: "quantity", label: t("ui.quantity") },
-          ], data);
-        } else if (mode === t("ui.admin_summary")) {
-          const group = controls.group_by.get_value();
-          const dimension = group === t("ui.product") ? "byProduct" : group === t("ui.color") ? "byColor" : group === t("ui.market") ? "byMarket" : "byCreatedDate";
-          table([{ key: "label", label: group }, { key: "count", label: t("ui.total_records") }, { key: "quantity", label: t("ui.total_quantity") }], data[dimension]);
-          const totals = document.createElement("p"); totals.textContent = `${t("ui.total_records")}: ${data.totalRecords} · ${t("ui.total_quantity")}: ${data.totalQuantity}`; body.prepend(totals);
-        } else table(data.columns, data.rows);
+        const response = await frappe.call({ method: "cutting.reporting.report_summary", args, type: "GET" });
+        table(response.message.columns, response.message.rows);
       } catch (_) { body.textContent = t("ui.report_error"); }
     }
 
@@ -78,6 +55,9 @@ frappe.pages["cutting-reports"].on_page_load = function (wrapper) {
     }
     page.set_primary_action(t("ui.refresh"), refresh);
     page.add_inner_button(t("ui.export"), exportCsv);
+    if (frappe.session.user === "Administrator" || frappe.user_roles.some((role) => ["System Manager", "Cutting Manager"].includes(role))) {
+      page.add_inner_button(t("ui.cutting_standard"), () => frappe.set_route("List", "Cutting Standard"));
+    }
     refresh();
   });
 };

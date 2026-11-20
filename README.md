@@ -4,7 +4,7 @@ App độc lập `cutting`, dùng chung master và Factory Device từ `factory_
 
 ## Cài bằng Pilot
 
-- Frappe `>=16.53.0,<17.0.0`, Python 3.14 và `factory_management >=0.1.40,<0.2.0` đã cài trên site. Phiên bản này cần Product Variant.product_color và Product Color.
+- Frappe `>=16.53.0,<17.0.0`, Python 3.14 và `factory_management >=0.1.88,<0.2.0` đã cài trên site. Phiên bản này cần Product Variant.product_color, Product Color và Trim.
 - Trong Pilot, thêm repo public `https://github.com/uzumaki2204/cutting-frappe`, chọn nhánh `version-16`, tên app `cutting`, rồi cài vào site đích.
 - Nếu đã có Web Page hoặc Builder Page xuất bản tại `/cutting`, lưu bản sao và tắt xuất bản trang cũ trước. Installer báo xung đột thay vì sửa nội dung trang có sẵn.
 - Chạy migrate và build assets theo quy trình Pilot, sau đó khởi động lại workload. Sao lưu database và public/private files trước khi cài/nâng cấp.
@@ -57,6 +57,12 @@ API kích hoạt/kiểm tra Cutting dùng `Factory Device` có sẵn và giữ n
 
 Cutting lấy mã và tên màu từ các trường `color_code` và `color_name` của `Product Color`, chỉ đưa màu đang hoạt động vào danh mục. Khi nâng cấp từ Cutting 0.1.5, patch migrate chuyển liên kết màu trong Cutting Record và Cutting History theo mã màu. Nếu không tìm được Product Color trùng mã duy nhất, migrate dừng và yêu cầu tạo master tương ứng trước khi chạy lại.
 
+## Định mức cắt
+
+Trong Desk, mở **Cutting Reports** rồi chọn **Định mức cắt** để khai báo định mức theo Product. Mỗi Product có một định mức dương, tối đa 5 chữ số sau dấu phẩy, đơn vị m/pcs. Báo cáo Summary tính **Cutting qty (m)** bằng Quantity nhân định mức hiện tại; mã hàng chưa có định mức để trống cột này.
+
+Trong danh sách **Cutting Standard**, Cutting Manager chọn **Import Excel** để tải file `.xlsx` dưới 5 MB. Hàng đầu tiên cần có `Product Code` và `Cutting Standard (m/pcs)` (cũng chấp nhận `Định mức`); mã hàng phải được lưu dạng text trong Excel. Import kiểm tra toàn bộ file trước khi tạo hoặc cập nhật định mức. Mã hàng không có Product hoặc trùng với nhiều Product sẽ bị từ chối; mỗi file tối đa 5.000 dòng dữ liệu.
+
 ## Kiểm tra và phát hành
 
 ```bash
@@ -67,4 +73,4 @@ bench --site <test-site> run-tests --app cutting
 
 Chạy integration test trên site riêng đã cài `factory_management` và `cutting`. Test tạo master/thiết bị tạm trong transaction của test framework. Không chạy bộ test này trên site đang vận hành.
 
-Source chuẩn tại `integrations/frappe/cutting` trong repo FactoryManagement. Khi phát hành, đồng bộ đúng nội dung thư mục app vào repo riêng, tăng phiên bản trong `pyproject.toml`, `cutting/__init__.py`, manifest và OpenAPI, commit rồi push nhánh `version-16`/tag tương ứng. Bản 0.1.33 yêu cầu Factory Management tối thiểu 0.1.40. Trên tablet, trang Cutting chiếm vừa chiều cao màn hình và chỉ vùng danh sách bản ghi cuộn dọc; bảng giữ tiêu đề khi cuộn. Popup cài đặt, xác nhận xóa cache và xác nhận xóa bản ghi đều hiển thị phía trên khi trang đang ở chế độ toàn màn hình; thao tác tablet chỉ sửa hoặc xóa mềm bản ghi có ngày phát sinh hôm nay theo giờ site. Xóa cứng từ Desk tuân theo quyền `Delete` của Frappe. Cài mới tạo schema trống; người dùng tự import dữ liệu nghiệp vụ sau.
+Source chuẩn tại `integrations/frappe/cutting` trong repo FactoryManagement. Khi phát hành, đồng bộ đúng nội dung thư mục app vào repo riêng, tăng phiên bản trong `pyproject.toml`, `cutting/__init__.py`, manifest và OpenAPI, commit rồi push nhánh `version-16`/tag tương ứng. Bản 0.1.34 yêu cầu Factory Management tối thiểu 0.1.88. Trên tablet, trang Cutting chiếm vừa chiều cao màn hình và chỉ vùng danh sách bản ghi cuộn dọc; bảng giữ tiêu đề khi cuộn. Popup cài đặt, xác nhận xóa cache và xác nhận xóa bản ghi đều hiển thị phía trên khi trang đang ở chế độ toàn màn hình; thao tác tablet chỉ sửa hoặc xóa mềm bản ghi có ngày phát sinh hôm nay theo giờ site. Xóa cứng từ Desk tuân theo quyền `Delete` của Frappe. Cài mới tạo schema trống; người dùng tự import dữ liệu nghiệp vụ sau.

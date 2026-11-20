@@ -1,13 +1,16 @@
 import uuid
 from datetime import datetime, timedelta, timezone
+from io import BytesIO
 from types import SimpleNamespace
 from unittest.mock import patch
 
 import frappe
 from frappe.tests import IntegrationTestCase
+from frappe.utils.file_manager import save_file
+from openpyxl import Workbook
 from werkzeug.wrappers import Response
 
-from cutting import api, devices, reporting
+from cutting import api, devices, reporting, standard_import
 from cutting.api_response import direct_summary_response
 from cutting.cutting.doctype.cutting_record.cutting_record import event_uid
 from cutting.timeutils import site_now, site_to_utc, site_zone
@@ -308,6 +311,96 @@ class TestCutting(IntegrationTestCase):
             reporting.admin_summary()
         frappe.set_user("Administrator")
 
+    def test_reports_sum_matching_trim_items_without_cancelled_orders(self):
+        for status, quantity, sample in (
+            ("New", 100, self.product.product_code),
+            ("Change", 25, self.product.product_code),
+            ("Cancel", 900, self.product.product_code),
+            ("New", 700, "OTHER-SAMPLE"),
+        ):
+            frappe.get_doc({
+                "doctype": "Trim", "source_key": uuid.uuid4().hex,
+                "order_no": uuid.uuid4().hex, "revision_no": "1",
+                "document_status": status,
+                "items": [{"order_plan_number": "PLAN", "sample_code": sample,
+                           "color_code": self.color.color_code, "order_qty": quantity}],
+            }).insert()
+        api.sync_records(self.device.name, [self.item("trim-report")])
+
+        summary = reporting.report_summary("2026-10-29", "2026-10-29", {"device": self.device.name})
+        detail = reporting.report_detail("2026-10-29", "2026-10-29", {"device": self.device.name})
+        self.assertEqual(summary["rows"][0]["sumOrderQty"], 125)
+        self.assertEqual(summary["columns"][-2]["key"], "sumOrderQty")
+        self.assertEqual(detail[0]["sum_order_qty"], 125)
+        self.assertNotIn("sumOrderQty", reporting.summary(
+            OccurredOnFrom="2026-10-29", OccurredOnTo="2026-10-29")["data"]["rows"][0])
+
+    def test_cutting_standard_recalculates_summary_and_rejects_excess_precision(self):
+        api.sync_records(self.device.name, [self.item("cutting-standard", 3)])
+        def summary_row():
+            report = reporting.report_summary("2026-10-29", "2026-10-29", {"device": self.device.name})
+            self.assertEqual(report["columns"][-1]["key"], "cuttingQtyM")
+            return report["rows"][0]
+
+        self.assertIsNone(summary_row()["cuttingQtyM"])
+        standard = frappe.get_doc({
+            "doctype": "Cutting Standard", "product": self.product.name,
+            "rate_m_per_piece": 0.12345,
+        }).insert()
+        self.assertEqual(standard.product_code, self.product.product_code)
+        self.assertEqual(standard.product_name, self.product.product_name)
+        self.assertEqual(summary_row()["cuttingQtyM"], 0.37035)
+        standard.rate_m_per_piece = 0.2
+        standard.save()
+        self.assertEqual(summary_row()["cuttingQtyM"], 0.6)
+        standard.rate_m_per_piece = 0.123456
+        with self.assertRaises(frappe.ValidationError):
+            standard.save()
+        standard.rate_m_per_piece = 0
+        with self.assertRaises(frappe.ValidationError):
+            standard.save()
+
+    def test_import_cutting_standards_by_product_code(self):
+        email = "cutting-standard-" + uuid.uuid4().hex[:10] + "@example.invalid"
+        user = {"doctype": "User", "email": email, "first_name": "Cutting Standard Test",
+                "send_welcome_email": 0, "user_type": "System User",
+                "roles": [{"role": "Cutting Manager"}]}
+        if frappe.get_meta("User").has_field("company"):
+            user["company"] = self.company.name
+        frappe.get_doc(user).insert()
+        frappe.set_user(email)
+        files = []
+
+        def upload(headers, rows):
+            book = Workbook()
+            sheet = book.active
+            sheet.append(headers)
+            for row in rows:
+                sheet.append(row)
+            output = BytesIO()
+            book.save(output)
+            book.close()
+            doc = save_file("cutting-standard-test.xlsx", output.getvalue(), None, None,
+                            is_private=1)
+            files.append(doc)
+            return doc.name
+
+        try:
+            code = self.product.product_code
+            first = upload(["Product Code", "Cutting Standard (m/pcs)"], [(code, 1.23456)])
+            self.assertEqual(standard_import.import_workbook(first), {"created": 1, "updated": 0})
+            second = upload(["Product Code", "Định mức"], [(code, 0.5)])
+            self.assertEqual(standard_import.import_workbook(second), {"created": 0, "updated": 1})
+            invalid = upload(["Product Code", "Định mức"], [(code, 2), ("UNKNOWN-CODE", 1)])
+            with self.assertRaises(frappe.ValidationError):
+                standard_import.import_workbook(invalid)
+            self.assertEqual(frappe.db.get_value("Cutting Standard", {"product": self.product.name},
+                                                  "rate_m_per_piece"), 0.5)
+        finally:
+            frappe.set_user("Administrator")
+            for doc in files:
+                frappe.delete_doc("File", doc.name, ignore_permissions=True, force=True)
+
     def test_dotnet_summary_reads_frappe_records_and_preserves_legacy_contract(self):
         api.sync_records(self.device.name, [self.item("summary-one", 10), self.item("summary-two", 5)])
         deleted = frappe.get_doc({
@@ -319,7 +412,8 @@ class TestCutting(IntegrationTestCase):
         }).insert()
         frappe.db.set_value("Cutting Record", deleted.name, "is_deleted", 1)
 
-        result = reporting.summary(OccurredOnFrom="2026-10-29", OccurredOnTo="2026-10-29")
+        result = reporting.summary(OccurredOnFrom="2026-10-29", OccurredOnTo="2026-10-29",
+                                   CompanyCode=self.company.company_code)
         self.assertEqual(set(result), {"success", "code", "message", "data", "errors"})
         self.assertTrue(result["success"])
         self.assertIsNone(result["message"])
@@ -353,7 +447,7 @@ class TestCutting(IntegrationTestCase):
         legacy = reporting.report_summary("2026-10-29", "2026-10-29", {"device": self.device.name})
         self.assertNotIn("success", legacy)
         self.assertEqual(legacy["metadata"]["deviceQc"], "Cutting")
-        self.assertEqual(len(legacy["columns"]), 7)
+        self.assertEqual(len(legacy["columns"]), 9)
 
     def test_dotnet_summary_date_bounds_and_report_role(self):
         today = "2026-10-29"
