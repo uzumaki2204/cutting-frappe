@@ -4,7 +4,7 @@ App độc lập `cutting`, dùng chung master và Factory Device từ `factory_
 
 ## Cài bằng Pilot
 
-- Frappe `>=16.53.0,<17.0.0`, Python 3.14 và `factory_management >=0.1.40,<0.2.0` đã cài trên site. Trang Cutting cần Product Variant.product_color và Product Color. Cột **Sum Order Qty (pcs)** hiển thị sau khi Factory Management có DocType Trim và Trim Item (bản 0.1.88 trở lên).
+- Frappe `>=16.53.0,<17.0.0`, Python 3.14 và `factory_management >=0.1.90,<0.2.0` đã cài trên site. Trang Cutting cần Product Variant.product_color và Product Color. Cột **Sum Order Qty (pcs)** hiển thị sau khi Factory Management có DocType Trim và Trim Item.
 - Trong Pilot, thêm repo public `https://github.com/uzumaki2204/cutting-frappe`, chọn nhánh `version-16`, tên app `cutting`, rồi cài vào site đích.
 - Nếu đã có Web Page hoặc Builder Page xuất bản tại `/cutting`, lưu bản sao và tắt xuất bản trang cũ trước. Installer báo xung đột thay vì sửa nội dung trang có sẵn.
 - Chạy migrate và build assets theo quy trình Pilot, sau đó khởi động lại workload. Sao lưu database và public/private files trước khi cài/nâng cấp.
@@ -60,6 +60,8 @@ Cutting lấy mã và tên màu từ các trường `color_code` và `color_name
 ## Định mức cắt
 
 Trong Desk, mở **Cutting Reports** rồi chọn **Định mức cắt** để khai báo định mức theo Product. Mỗi Product có một định mức dương, tối đa 5 chữ số sau dấu phẩy, đơn vị m/pcs. Báo cáo Summary tính **Cutting qty (m)** bằng Quantity nhân định mức hiện tại rồi làm tròn tới số nguyên gần nhất (`.5` làm tròn lên); mã hàng chưa có định mức để trống cột này.
+
+Workspace **TRIM and Cutting** trong module Cutting gom các trang nghiệp vụ Desk thành hai nhóm. Nhóm TRIM mở danh sách đơn, trang nhập Excel và lịch sử nhập. Nhóm Cutting mở bản ghi, lịch sử, báo cáo và định mức cắt. Workspace và từng liên kết tuân theo vai trò của người dùng.
 
 Trong danh sách **Cutting Standard**, dùng chức năng **Import** có sẵn của Frappe. Chọn DocType `Cutting Standard`, chế độ **Insert or Update Records**, rồi tải file `.xlsx` hoặc `.csv` có cột `Product Code` và `Cutting Standard (m/pcs)`. File cũ với cột `Định mức` cũng được nhận diện qua bước map cột của Data Import. Import tự liên kết mã hàng với Product và cập nhật định mức theo Product Code. Mã hàng chưa có Product được ghi vào **Skipped Rows** để xem hoặc tải xuống; chỉ mã hàng đã có Product được lưu. Form Cutting Standard chỉ hiện mã hàng và định mức; mã hàng phải khớp một Product.
 

@@ -1,0 +1,85 @@
+{
+  "doctype": "Workspace",
+  "name": "TRIM and Cutting",
+  "label": "TRIM and Cutting",
+  "title": "TRIM and Cutting",
+  "module": "Cutting",
+  "type": "Workspace",
+  "public": 1,
+  "standard": 1,
+  "is_hidden": 0,
+  "hide_custom": 1,
+  "for_user": "",
+  "icon": "layout-dashboard",
+  "sequence_id": 10,
+  "content": "[{\"id\":\"trimCard1\",\"type\":\"card\",\"data\":{\"card_name\":\"Quản lý TRIM\",\"col\":6}},{\"id\":\"cutCard01\",\"type\":\"card\",\"data\":{\"card_name\":\"Quản lý Cutting\",\"col\":6}}]",
+  "links": [
+    {
+      "type": "Card Break",
+      "label": "Quản lý TRIM",
+      "link_count": 3
+    },
+    {
+      "type": "Link",
+      "label": "Đơn TRIM",
+      "link_type": "DocType",
+      "link_to": "Trim"
+    },
+    {
+      "type": "Link",
+      "label": "Nhập Excel TRIM",
+      "link_type": "Page",
+      "link_to": "trim-import"
+    },
+    {
+      "type": "Link",
+      "label": "Lịch sử nhập TRIM",
+      "link_type": "DocType",
+      "link_to": "Trim Import Run"
+    },
+    {
+      "type": "Card Break",
+      "label": "Quản lý Cutting",
+      "link_count": 4
+    },
+    {
+      "type": "Link",
+      "label": "Bản ghi Cutting",
+      "link_type": "DocType",
+      "link_to": "Cutting Record"
+    },
+    {
+      "type": "Link",
+      "label": "Lịch sử Cutting",
+      "link_type": "DocType",
+      "link_to": "Cutting History"
+    },
+    {
+      "type": "Link",
+      "label": "Báo cáo Cutting",
+      "link_type": "Page",
+      "link_to": "cutting-reports"
+    },
+    {
+      "type": "Link",
+      "label": "Định mức cắt",
+      "link_type": "DocType",
+      "link_to": "Cutting Standard"
+    }
+  ],
+  "shortcuts": [],
+  "roles": [
+    {
+      "role": "Trim Manager"
+    },
+    {
+      "role": "Cutting Manager"
+    },
+    {
+      "role": "Cutting Viewer"
+    },
+    {
+      "role": "System Manager"
+    }
+  ]
+}
