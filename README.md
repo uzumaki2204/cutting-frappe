@@ -63,6 +63,8 @@ Trong Desk, mở **Cutting Reports** rồi chọn **Định mức cắt** để 
 
 Workspace **TRIM and Cutting** trong module Cutting gom các trang nghiệp vụ Desk thành hai nhóm. Nhóm TRIM mở danh sách đơn, trang nhập Excel và lịch sử nhập. Nhóm Cutting mở bản ghi, lịch sử, báo cáo và định mức cắt. Workspace và từng liên kết tuân theo vai trò của người dùng.
 
+Để mở Workspace này sau khi đăng nhập, đặt **Default Workspace** của tài khoản thành `TRIM and Cutting`. Tài khoản đó sẽ vào `/desk/trim-and-cutting` khi đăng nhập hoặc mở trang gốc của site. Đường dẫn `/apps` vẫn mở màn hình chọn ứng dụng.
+
 Trong danh sách **Cutting Standard**, dùng chức năng **Import** có sẵn của Frappe. Chọn DocType `Cutting Standard`, chế độ **Insert or Update Records**, rồi tải file `.xlsx` hoặc `.csv` có cột `Product Code` và `Cutting Standard (m/pcs)`. File cũ với cột `Định mức` cũng được nhận diện qua bước map cột của Data Import. Import tự liên kết mã hàng với Product và cập nhật định mức theo Product Code. Mã hàng chưa có Product được ghi vào **Skipped Rows** để xem hoặc tải xuống; chỉ mã hàng đã có Product được lưu. Form Cutting Standard chỉ hiện mã hàng và định mức; mã hàng phải khớp một Product.
 
 ## Kiểm tra và phát hành

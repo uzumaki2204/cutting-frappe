@@ -20,7 +20,10 @@ before_install = "cutting.install.before_install"
 before_migrate = "cutting.install.before_install"
 after_install = "cutting.install.after_install"
 after_migrate = "cutting.install.after_migrate"
-after_request = ["cutting.api_response.direct_summary_response"]
+after_request = [
+    "cutting.api_response.direct_summary_response",
+    "cutting.desk_landing.open_default_workspace",
+]
 app_include_js = ["/assets/cutting/js/i18n.js"]
 
 data_import_providers = {
