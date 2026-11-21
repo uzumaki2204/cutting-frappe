@@ -4,7 +4,7 @@ App độc lập `cutting`, dùng chung master và Factory Device từ `factory_
 
 ## Cài bằng Pilot
 
-- Frappe `>=16.53.0,<17.0.0`, Python 3.14 và `factory_management >=0.1.88,<0.2.0` đã cài trên site. Phiên bản này cần Product Variant.product_color, Product Color và Trim.
+- Frappe `>=16.53.0,<17.0.0`, Python 3.14 và `factory_management >=0.1.40,<0.2.0` đã cài trên site. Trang Cutting cần Product Variant.product_color và Product Color. Cột **Sum Order Qty (pcs)** hiển thị sau khi Factory Management có DocType Trim và Trim Item (bản 0.1.88 trở lên).
 - Trong Pilot, thêm repo public `https://github.com/uzumaki2204/cutting-frappe`, chọn nhánh `version-16`, tên app `cutting`, rồi cài vào site đích.
 - Nếu đã có Web Page hoặc Builder Page xuất bản tại `/cutting`, lưu bản sao và tắt xuất bản trang cũ trước. Installer báo xung đột thay vì sửa nội dung trang có sẵn.
 - Chạy migrate và build assets theo quy trình Pilot, sau đó khởi động lại workload. Sao lưu database và public/private files trước khi cài/nâng cấp.
@@ -73,4 +73,4 @@ bench --site <test-site> run-tests --app cutting
 
 Chạy integration test trên site riêng đã cài `factory_management` và `cutting`. Test tạo master/thiết bị tạm trong transaction của test framework. Không chạy bộ test này trên site đang vận hành.
 
-Source chuẩn tại `integrations/frappe/cutting` trong repo FactoryManagement. Khi phát hành, đồng bộ đúng nội dung thư mục app vào repo riêng, tăng phiên bản trong `pyproject.toml`, `cutting/__init__.py`, manifest và OpenAPI, commit rồi push nhánh `version-16`/tag tương ứng. Bản 0.1.34 yêu cầu Factory Management tối thiểu 0.1.88. Trên tablet, trang Cutting chiếm vừa chiều cao màn hình và chỉ vùng danh sách bản ghi cuộn dọc; bảng giữ tiêu đề khi cuộn. Popup cài đặt, xác nhận xóa cache và xác nhận xóa bản ghi đều hiển thị phía trên khi trang đang ở chế độ toàn màn hình; thao tác tablet chỉ sửa hoặc xóa mềm bản ghi có ngày phát sinh hôm nay theo giờ site. Xóa cứng từ Desk tuân theo quyền `Delete` của Frappe. Cài mới tạo schema trống; người dùng tự import dữ liệu nghiệp vụ sau.
+Source chuẩn tại `integrations/frappe/cutting` trong repo FactoryManagement. Khi phát hành, đồng bộ đúng nội dung thư mục app vào repo riêng, tăng phiên bản trong `pyproject.toml`, `cutting/__init__.py`, manifest và OpenAPI, commit rồi push nhánh `version-16`/tag tương ứng. Bản 0.1.35 cho phép migrate Cutting khi Trim chưa có trong database. Cập nhật và migrate Factory Management 0.1.88 trở lên để cột **Sum Order Qty (pcs)** có dữ liệu. Trên tablet, trang Cutting chiếm vừa chiều cao màn hình và chỉ vùng danh sách bản ghi cuộn dọc; bảng giữ tiêu đề khi cuộn. Popup cài đặt, xác nhận xóa cache và xác nhận xóa bản ghi đều hiển thị phía trên khi trang đang ở chế độ toàn màn hình; thao tác tablet chỉ sửa hoặc xóa mềm bản ghi có ngày phát sinh hôm nay theo giờ site. Xóa cứng từ Desk tuân theo quyền `Delete` của Frappe. Cài mới tạo schema trống; người dùng tự import dữ liệu nghiệp vụ sau.

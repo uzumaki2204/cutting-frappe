@@ -115,6 +115,8 @@ def _trim_key(plan, sample, color):
 
 
 def _trim_order_quantities(keys):
+    if not frappe.db.table_exists("Trim", cached=False) or not frappe.db.table_exists("Trim Item", cached=False):
+        return None
     unique = {}
     for key in keys:
         values = tuple(str(value or "").strip() for value in key)
@@ -164,7 +166,7 @@ def report_detail(from_date: str | None = None, to_date: str | None = None, filt
                                     row.color_code) for row in rows)
     for row in rows:
         key = _trim_key(row.product_code_identifier, row.product_code, row.color_code)
-        row["sum_order_qty"] = totals.get(key, 0)
+        row["sum_order_qty"] = totals.get(key, 0) if totals is not None else None
     return rows
 
 
@@ -179,7 +181,7 @@ def report_summary(from_date: str | None = None, to_date: str | None = None, fil
     rates = _cutting_rates(row["_product"] for row in report["rows"])
     for row in report["rows"]:
         key = _trim_key(row["planCode"], row["sampleCode"], row["colorCode"])
-        row["sumOrderQty"] = totals.get(key, 0)
+        row["sumOrderQty"] = totals.get(key, 0) if totals is not None else None
         rate = rates.get(row.pop("_product"))
         row["cuttingQtyM"] = (float(Decimal(row["quantity"]) * rate)
                               if rate is not None else None)
