@@ -22,3 +22,13 @@ after_install = "cutting.install.after_install"
 after_migrate = "cutting.install.after_migrate"
 after_request = ["cutting.api_response.direct_summary_response"]
 app_include_js = ["/assets/cutting/js/i18n.js"]
+
+data_import_providers = {
+    "Cutting Standard": "cutting.standard_data_import.CuttingStandardImportProvider",
+}
+
+doc_events = {
+    "Data Import": {
+        "validate": "cutting.standard_data_import.skip_missing_products",
+    },
+}

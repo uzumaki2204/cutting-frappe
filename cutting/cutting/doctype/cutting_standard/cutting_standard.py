@@ -1,6 +1,7 @@
 """Validate a product's current cutting standard."""
 
 from decimal import Decimal, InvalidOperation
+from math import isfinite, ulp
 
 import frappe
 from frappe.model.document import Document
@@ -23,5 +24,10 @@ class CuttingStandard(Document):
             rate = Decimal(str(self.rate_m_per_piece))
         except InvalidOperation:
             rate = Decimal(0)
+        if isinstance(self.rate_m_per_piece, float) and isfinite(self.rate_m_per_piece):
+            rounded = Decimal(str(round(self.rate_m_per_piece, 5)))
+            if abs(rate - rounded) <= Decimal(str(ulp(self.rate_m_per_piece))) * 2:
+                rate = rounded
         if not rate.is_finite() or rate <= 0 or rate.normalize().as_tuple().exponent < -5:
             frappe.throw(message("error.cutting_standard_invalid"))
+        self.rate_m_per_piece = float(rate)

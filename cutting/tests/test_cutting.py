@@ -10,9 +10,10 @@ from frappe.utils.file_manager import save_file
 from openpyxl import Workbook
 from werkzeug.wrappers import Response
 
-from cutting import api, devices, reporting, standard_import
+from cutting import api, devices, reporting
 from cutting.api_response import direct_summary_response
 from cutting.cutting.doctype.cutting_record.cutting_record import event_uid
+from cutting.standard_data_import import CuttingStandardImportProvider
 from cutting.timeutils import site_now, site_to_utc, site_zone
 
 
@@ -393,25 +394,47 @@ class TestCutting(IntegrationTestCase):
             doc = save_file("cutting-standard-test.xlsx", output.getvalue(), None, None,
                             is_private=1)
             files.append(doc)
-            return doc.name
+            return doc.file_url
 
         try:
             code = self.product.product_code
-            first = upload(["Product Code", "Cutting Standard (m/pcs)"], [(code, 1.23456)])
-            self.assertEqual(standard_import.import_workbook(first), {"created": 1, "updated": 0, "skipped": 0})
-            second = upload(["Product Code", "Định mức"], [(code, 0.5)])
-            self.assertEqual(standard_import.import_workbook(second), {"created": 0, "updated": 1, "skipped": 0})
-            skipped = upload(["Product Code", "Định mức"], [(code, 2), ("UNKNOWN-CODE", "invalid")])
-            self.assertEqual(standard_import.import_workbook(skipped),
-                             {"created": 0, "updated": 1, "skipped": 1})
-            artifact = upload(["Product Code", "Định mức"], [(code, 1.8239999999999998)])
-            self.assertEqual(standard_import.import_workbook(artifact),
-                             {"created": 0, "updated": 1, "skipped": 0})
+            first = upload(["Product Code", "Cutting Standard (m/pcs)"],
+                           [(code, 1.23456), ("UNKNOWN-CODE", "invalid")])
+            data_import = frappe.get_doc({
+                "doctype": "Data Import", "reference_doctype": "Cutting Standard",
+                "import_type": "Insert or Update Records", "import_file": first,
+            }).insert()
+            self.assertEqual([row.row_number for row in data_import.skipped_rows], [3])
+            self.assertEqual(data_import.payload_count, 2)
+
+            provider = CuttingStandardImportProvider()
+            self.assertEqual([field["fieldname"] for field in provider.get_import_fields()["fields"]],
+                             ["product_code", "rate_m_per_piece"])
+            importer = data_import.get_importer()
+            payload = importer.import_file.get_payloads_for_import()[0]
+            created, action = provider.import_row(importer, payload.doc)
+            self.assertEqual(action, "Insert")
+            self.assertEqual(created.product, self.product.name)
+
+            second = upload(["Product Code", "Cutting Standard (m/pcs)"],
+                            [(code, 1.8239999999999998)])
+            data_import.import_file = second
+            data_import.save()
+            self.assertFalse(data_import.skipped_rows)
+            importer = data_import.get_importer()
+            payload = importer.import_file.get_payloads_for_import()[0]
+            updated, action = provider.import_row(importer, payload.doc)
+            self.assertEqual(action, "Update")
+            self.assertEqual(updated.name, created.name)
             self.assertEqual(frappe.db.get_value("Cutting Standard", {"product": self.product.name},
                                                   "rate_m_per_piece"), 1.824)
-            invalid = upload(["Product Code", "Định mức"], [(code, 0.123456)])
+            invalid = upload(["Product Code", "Cutting Standard (m/pcs)"], [(code, 0.123456)])
+            data_import.import_file = invalid
+            data_import.save()
+            importer = data_import.get_importer()
+            payload = importer.import_file.get_payloads_for_import()[0]
             with self.assertRaises(frappe.ValidationError):
-                standard_import.import_workbook(invalid)
+                provider.import_row(importer, payload.doc)
             self.assertEqual(frappe.db.get_value("Cutting Standard", {"product": self.product.name},
                                                   "rate_m_per_piece"), 1.824)
         finally:
