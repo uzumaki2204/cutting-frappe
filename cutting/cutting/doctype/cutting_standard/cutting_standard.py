@@ -10,6 +10,15 @@ from cutting.i18n import message
 
 class CuttingStandard(Document):
     def validate(self):
+        code = str(self.product_code or "").strip()
+        if not code:
+            frappe.throw(frappe._("Product Code is required."))
+        products = frappe.get_all("Product", filters={"product_code": code},
+                                  fields=["name", "product_code"], limit=2)
+        if len(products) != 1:
+            frappe.throw(frappe._("Product Code {0} must match exactly one Product.").format(code))
+        self.product = products[0].name
+        self.product_code = products[0].product_code
         try:
             rate = Decimal(str(self.rate_m_per_piece))
         except InvalidOperation:

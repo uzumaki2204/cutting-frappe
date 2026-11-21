@@ -312,18 +312,22 @@ class TestCutting(IntegrationTestCase):
         frappe.set_user("Administrator")
 
     def test_reports_sum_matching_trim_items_without_cancelled_orders(self):
-        for status, quantity, sample in (
-            ("New", 100, self.product.product_code),
-            ("Change", 25, self.product.product_code),
-            ("Cancel", 900, self.product.product_code),
-            ("New", 700, "OTHER-SAMPLE"),
+        if not frappe.db.table_exists("Trim", cached=False):
+            self.skipTest("Factory Management has no Trim tables")
+        sample = self.market.code + self.product.product_code
+        for status, quantity, sample_code, color_code in (
+            ("New", 100, sample, self.color.color_code),
+            ("Change", 25, sample, self.color.color_code),
+            ("Cancel", 900, sample, self.color.color_code),
+            ("New", 700, self.product.product_code, self.color.color_code),
+            ("New", 800, sample, "OTHER-COLOR"),
         ):
             frappe.get_doc({
                 "doctype": "Trim", "source_key": uuid.uuid4().hex,
                 "order_no": uuid.uuid4().hex, "revision_no": "1",
                 "document_status": status,
-                "items": [{"order_plan_number": "PLAN", "sample_code": sample,
-                           "color_code": self.color.color_code, "order_qty": quantity}],
+                "items": [{"order_plan_number": "PLAN", "sample_code": sample_code,
+                           "color_code": color_code, "order_qty": quantity}],
             }).insert()
         api.sync_records(self.device.name, [self.item("trim-report")])
 
@@ -344,12 +348,15 @@ class TestCutting(IntegrationTestCase):
 
         self.assertIsNone(summary_row()["cuttingQtyM"])
         standard = frappe.get_doc({
-            "doctype": "Cutting Standard", "product": self.product.name,
+            "doctype": "Cutting Standard", "product_code": self.product.product_code,
             "rate_m_per_piece": 0.12345,
         }).insert()
         self.assertEqual(standard.product_code, self.product.product_code)
-        self.assertEqual(standard.product_name, self.product.product_name)
+        self.assertEqual(standard.product, self.product.name)
         self.assertEqual(summary_row()["cuttingQtyM"], 0.37035)
+        with self.assertRaises(frappe.ValidationError):
+            frappe.get_doc({"doctype": "Cutting Standard", "product_code": "UNKNOWN-CODE",
+                            "rate_m_per_piece": 1}).insert()
         standard.rate_m_per_piece = 0.2
         standard.save()
         self.assertEqual(summary_row()["cuttingQtyM"], 0.6)
@@ -388,14 +395,22 @@ class TestCutting(IntegrationTestCase):
         try:
             code = self.product.product_code
             first = upload(["Product Code", "Cutting Standard (m/pcs)"], [(code, 1.23456)])
-            self.assertEqual(standard_import.import_workbook(first), {"created": 1, "updated": 0})
+            self.assertEqual(standard_import.import_workbook(first), {"created": 1, "updated": 0, "skipped": 0})
             second = upload(["Product Code", "Định mức"], [(code, 0.5)])
-            self.assertEqual(standard_import.import_workbook(second), {"created": 0, "updated": 1})
-            invalid = upload(["Product Code", "Định mức"], [(code, 2), ("UNKNOWN-CODE", 1)])
+            self.assertEqual(standard_import.import_workbook(second), {"created": 0, "updated": 1, "skipped": 0})
+            skipped = upload(["Product Code", "Định mức"], [(code, 2), ("UNKNOWN-CODE", "invalid")])
+            self.assertEqual(standard_import.import_workbook(skipped),
+                             {"created": 0, "updated": 1, "skipped": 1})
+            artifact = upload(["Product Code", "Định mức"], [(code, 1.8239999999999998)])
+            self.assertEqual(standard_import.import_workbook(artifact),
+                             {"created": 0, "updated": 1, "skipped": 0})
+            self.assertEqual(frappe.db.get_value("Cutting Standard", {"product": self.product.name},
+                                                  "rate_m_per_piece"), 1.824)
+            invalid = upload(["Product Code", "Định mức"], [(code, 0.123456)])
             with self.assertRaises(frappe.ValidationError):
                 standard_import.import_workbook(invalid)
             self.assertEqual(frappe.db.get_value("Cutting Standard", {"product": self.product.name},
-                                                  "rate_m_per_piece"), 0.5)
+                                                  "rate_m_per_piece"), 1.824)
         finally:
             frappe.set_user("Administrator")
             for doc in files:

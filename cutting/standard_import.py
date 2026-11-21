@@ -3,6 +3,7 @@
 from collections import defaultdict
 from decimal import Decimal, InvalidOperation
 from io import BytesIO
+from math import isfinite, ulp
 from pathlib import Path
 from zipfile import BadZipFile
 
@@ -40,6 +41,10 @@ def _rate(value, row_number):
         rate = Decimal(str(value).strip())
     except (InvalidOperation, ValueError):
         _invalid(f"Row {row_number}: cutting standard must be a positive number with at most 5 decimal places.")
+    if isinstance(value, float) and isfinite(value):
+        rounded = Decimal(str(round(value, 5)))
+        if abs(rate - rounded) <= Decimal(str(ulp(value))) * 2:
+            rate = rounded
     if not rate.is_finite() or rate <= 0 or rate.normalize().as_tuple().exponent < -5:
         _invalid(f"Row {row_number}: cutting standard must be a positive number with at most 5 decimal places.")
     return rate
@@ -59,7 +64,6 @@ def _parse(content):
                 _invalid("The Excel file needs Product Code and Cutting Standard (m/pcs) columns.")
             columns[key] = match
         result = []
-        seen = set()
         for row_number, row in enumerate(rows, 2):
             if not any(value is not None and str(value).strip() for value in row):
                 continue
@@ -69,11 +73,8 @@ def _parse(content):
             if not isinstance(raw_code, str) or not raw_code.strip():
                 _invalid(f"Row {row_number}: Product Code must be text.")
             code = raw_code.strip()
-            if code.casefold() in seen:
-                _invalid(f"Row {row_number}: duplicate Product Code {code}.")
-            seen.add(code.casefold())
             raw_rate = row[columns["rate"]] if columns["rate"] < len(row) else None
-            result.append((row_number, code, _rate(raw_rate, row_number)))
+            result.append((row_number, code, raw_rate))
         if not result:
             _invalid("The Excel file has no data rows.")
         return result
@@ -103,16 +104,24 @@ def import_workbook(file_id: str):
     entries = _parse(_private_workbook(file_id))
     products = _products([code for _, code, _ in entries])
     resolved = []
-    for row_number, code, rate in entries:
+    skipped = 0
+    seen = set()
+    for row_number, code, raw_rate in entries:
         names = products.get(code.casefold(), [])
+        if not names:
+            skipped += 1
+            continue
         if len(names) != 1:
-            _invalid(f"Row {row_number}: Product Code {code} is missing or ambiguous.")
-        resolved.append((names[0], rate))
+            _invalid(f"Row {row_number}: Product Code {code} matches multiple Products.")
+        if code.casefold() in seen:
+            _invalid(f"Row {row_number}: duplicate Product Code {code}.")
+        seen.add(code.casefold())
+        resolved.append((names[0], code, _rate(raw_rate, row_number)))
     created = updated = 0
-    for product, rate in resolved:
+    for product, code, rate in resolved:
         name = frappe.db.get_value("Cutting Standard", {"product": product}, "name")
         doc = frappe.get_doc("Cutting Standard", name) if name else frappe.new_doc("Cutting Standard")
-        doc.product = product
+        doc.product_code = code
         doc.rate_m_per_piece = float(rate)
         if name:
             doc.save()
@@ -120,4 +129,4 @@ def import_workbook(file_id: str):
         else:
             doc.insert()
             created += 1
-    return {"created": created, "updated": updated}
+    return {"created": created, "updated": updated, "skipped": skipped}

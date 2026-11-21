@@ -35,7 +35,8 @@ frappe.listview_settings["Cutting Standard"] = {
           });
           const result = response.message;
           frappe.msgprint(t("ui.import_standard_result")
-            .replace("{created}", result.created).replace("{updated}", result.updated));
+            .replace("{created}", result.created).replace("{updated}", result.updated)
+            .replace("{skipped}", result.skipped));
           listview.refresh();
         } catch (error) {
           frappe.msgprint(error.message || t("ui.import_standard_failed"));

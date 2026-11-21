@@ -162,10 +162,10 @@ def _cutting_rates(products):
 def report_detail(from_date: str | None = None, to_date: str | None = None, filters: dict | str | None = None):
     require_viewer()
     _, _, rows = _report_rows(from_date, to_date, 7, _data(filters, {}))
-    totals = _trim_order_quantities((row.product_code_identifier, row.product_code,
+    totals = _trim_order_quantities((row.product_code_identifier, row.market_code + row.product_code,
                                     row.color_code) for row in rows)
     for row in rows:
-        key = _trim_key(row.product_code_identifier, row.product_code, row.color_code)
+        key = _trim_key(row.product_code_identifier, row.market_code + row.product_code, row.color_code)
         row["sum_order_qty"] = totals.get(key, 0) if totals is not None else None
     return rows
 
@@ -176,11 +176,11 @@ def report_summary(from_date: str | None = None, to_date: str | None = None, fil
     selected = _data(filters, {})
     start, end, source = _report_rows(from_date, to_date, 31, selected)
     report = _summary_payload(start, end, source, selected, group_by_product=True)
-    totals = _trim_order_quantities((row["planCode"], row["sampleCode"], row["colorCode"])
+    totals = _trim_order_quantities((row["planCode"], row["countrySampleCode"], row["colorCode"])
                                     for row in report["rows"])
     rates = _cutting_rates(row["_product"] for row in report["rows"])
     for row in report["rows"]:
-        key = _trim_key(row["planCode"], row["sampleCode"], row["colorCode"])
+        key = _trim_key(row["planCode"], row["countrySampleCode"], row["colorCode"])
         row["sumOrderQty"] = totals.get(key, 0) if totals is not None else None
         rate = rates.get(row.pop("_product"))
         row["cuttingQtyM"] = (float(Decimal(row["quantity"]) * rate)
