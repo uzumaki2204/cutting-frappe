@@ -353,13 +353,16 @@ class TestCutting(IntegrationTestCase):
         }).insert()
         self.assertEqual(standard.product_code, self.product.product_code)
         self.assertEqual(standard.product, self.product.name)
-        self.assertEqual(summary_row()["cuttingQtyM"], 0.37035)
+        self.assertEqual(summary_row()["cuttingQtyM"], 0)
         with self.assertRaises(frappe.ValidationError):
             frappe.get_doc({"doctype": "Cutting Standard", "product_code": "UNKNOWN-CODE",
                             "rate_m_per_piece": 1}).insert()
         standard.rate_m_per_piece = 0.2
         standard.save()
-        self.assertEqual(summary_row()["cuttingQtyM"], 0.6)
+        self.assertEqual(summary_row()["cuttingQtyM"], 1)
+        standard.rate_m_per_piece = 0.5
+        standard.save()
+        self.assertEqual(summary_row()["cuttingQtyM"], 2)
         standard.rate_m_per_piece = 0.123456
         with self.assertRaises(frappe.ValidationError):
             standard.save()

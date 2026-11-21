@@ -2,7 +2,7 @@
 
 from collections import defaultdict
 from datetime import date, datetime, time, timedelta, timezone
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 
 import frappe
 
@@ -183,7 +183,7 @@ def report_summary(from_date: str | None = None, to_date: str | None = None, fil
         key = _trim_key(row["planCode"], row["countrySampleCode"], row["colorCode"])
         row["sumOrderQty"] = totals.get(key, 0) if totals is not None else None
         rate = rates.get(row.pop("_product"))
-        row["cuttingQtyM"] = (float(Decimal(row["quantity"]) * rate)
+        row["cuttingQtyM"] = (int((Decimal(row["quantity"]) * rate).to_integral_value(rounding=ROUND_HALF_UP))
                               if rate is not None else None)
     report["columns"].append({"key": "sumOrderQty", "label": message("ui.sum_order_qty")})
     report["columns"].append({"key": "cuttingQtyM", "label": message("ui.cutting_qty_m")})
