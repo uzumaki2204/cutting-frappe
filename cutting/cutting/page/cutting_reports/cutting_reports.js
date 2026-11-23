@@ -15,18 +15,47 @@ frappe.pages["cutting-reports"].on_page_load = function (wrapper) {
     add("market", "ui.market", "Link", "Market");
     const body = document.createElement("div"); body.className = "p-3"; page.main[0].append(body);
     let exportRows = [], exportColumns = [];
+    let sortKey = null, sortDirection = 1;
+    const numericColumns = new Set(["quantity", "sumOrderQty", "cuttingQtyM"]);
+    const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: "base" });
+
+    function sortedRows(rows) {
+      if (!sortKey) return rows;
+      return [...rows].sort((left, right) => {
+        const a = left[sortKey], b = right[sortKey];
+        const aEmpty = a == null || a === "", bEmpty = b == null || b === "";
+        if (aEmpty || bEmpty) return aEmpty === bEmpty ? 0 : aEmpty ? 1 : -1;
+        const difference = numericColumns.has(sortKey) ? Number(a) - Number(b) : collator.compare(String(a), String(b));
+        return difference * sortDirection;
+      });
+    }
 
     function table(columns, rows) {
-      exportColumns = columns; exportRows = rows;
+      exportColumns = columns; exportRows = sortedRows(rows);
       body.replaceChildren();
-      if (!rows.length) { const p = document.createElement("p"); p.className = "text-muted"; p.textContent = t("ui.no_data"); body.append(p); return; }
+      if (!exportRows.length) { const p = document.createElement("p"); p.className = "text-muted"; p.textContent = t("ui.no_data"); body.append(p); return; }
       const container = document.createElement("div"); container.className = "table-responsive";
       const el = document.createElement("table"); el.className = "table table-bordered";
       const head = document.createElement("thead"), header = document.createElement("tr");
-      for (const column of columns) { const th = document.createElement("th"); th.scope = "col"; th.textContent = column.label; header.append(th); }
+      for (const column of columns) {
+        const th = document.createElement("th"); th.scope = "col";
+        const active = sortKey === column.key;
+        th.setAttribute("aria-sort", active ? (sortDirection === 1 ? "ascending" : "descending") : "none");
+        const button = document.createElement("button"); button.type = "button";
+        button.className = "btn btn-link p-0 text-body text-decoration-none";
+        button.textContent = column.label;
+        const nextDirection = active && sortDirection === 1 ? -1 : 1;
+        button.setAttribute("aria-label", `${column.label}: ${t(nextDirection === 1 ? "ui.sort_ascending" : "ui.sort_descending")}`);
+        if (active) {
+          const arrow = document.createElement("span"); arrow.setAttribute("aria-hidden", "true");
+          arrow.textContent = sortDirection === 1 ? " ▲" : " ▼"; button.append(arrow);
+        }
+        button.addEventListener("click", () => { sortKey = column.key; sortDirection = nextDirection; table(columns, rows); });
+        th.append(button); header.append(th);
+      }
       head.append(header); el.append(head);
       const tbody = document.createElement("tbody");
-      for (const row of rows) {
+      for (const row of exportRows) {
         const tr = document.createElement("tr");
         for (const column of columns) { const td = document.createElement("td"); td.textContent = row[column.key] ?? ""; tr.append(td); }
         tbody.append(tr);

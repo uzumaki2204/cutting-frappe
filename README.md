@@ -61,6 +61,8 @@ Cutting lấy mã và tên màu từ các trường `color_code` và `color_name
 
 Trong Desk, mở **Cutting Reports** rồi chọn **Định mức cắt** để khai báo định mức theo Product. Mỗi Product có một định mức dương, tối đa 5 chữ số sau dấu phẩy, đơn vị m/pcs. Báo cáo Summary tính **Cutting qty (m)** bằng Quantity nhân định mức hiện tại rồi làm tròn tới số nguyên gần nhất (`.5` làm tròn lên); mã hàng chưa có định mức để trống cột này.
 
+Trong **Cutting Reports**, bấm tiêu đề cột để sắp xếp tăng dần hoặc giảm dần. Thứ tự đã chọn được giữ khi tải lại báo cáo và khi xuất CSV.
+
 Workspace **TRIM and Cutting** trong module Cutting gom các trang nghiệp vụ Desk thành hai nhóm. Nhóm TRIM mở danh sách đơn, trang nhập Excel và lịch sử nhập. Nhóm Cutting mở bản ghi, lịch sử, báo cáo và định mức cắt. Workspace và từng liên kết tuân theo vai trò của người dùng.
 
 Để mở Workspace này sau khi đăng nhập, đặt **Default Workspace** của tài khoản thành `TRIM and Cutting`. Tài khoản đó sẽ vào `/desk/trim-and-cutting` khi đăng nhập hoặc mở trang gốc của site. Đường dẫn `/apps` vẫn mở màn hình chọn ứng dụng.
